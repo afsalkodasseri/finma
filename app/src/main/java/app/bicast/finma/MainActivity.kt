@@ -24,7 +24,7 @@ class MainActivity : AppCompatActivity() {
             val name = etUserName.text.toString()
             val password = etPassword.text.toString()
             if(name == "admin" && password == "123"){
-                Toast.makeText(this,"Success",Toast.LENGTH_SHORT).show()
+                Toast.makeText(this,"Success login",Toast.LENGTH_SHORT).show()
             }else
                 Toast.makeText(this,"Failed",Toast.LENGTH_SHORT).show()
         }

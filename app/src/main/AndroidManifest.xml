@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.MyKotPure"
+        tools:targetApi="31">
+        <activity
+            android:name="app.bicast.finma.IndividualDebtActivity"
+            android:exported="false" />
+        <activity
+            android:name="app.bicast.finma.NewBankBrsActivity"
+            android:exported="false" />
+        <activity
+            android:name="app.bicast.finma.BankBRSActivity"
+            android:exported="false" />
+        <activity
+            android:name="app.bicast.finma.NewExpenseActivity"
+            android:exported="false" />
+        <activity
+            android:name="app.bicast.finma.ExpensesActivity"
+            android:exported="false" />
+        <activity
+            android:name="app.bicast.finma.DebtsActivity"
+            android:exported="false" />
+        <activity
+            android:name="app.bicast.finma.EntryActivity"
+            android:exported="false" />
+        <activity
+            android:name="app.bicast.finma.IndividualsActivity"
+            android:exported="false" />
+        <activity
+            android:name="app.bicast.finma.PaidActivity"
+            android:exported="false" />
+        <activity
+            android:name="app.bicast.finma.ReceivedActivity"
+            android:exported="false" />
+        <activity
+            android:name="app.bicast.finma.HomeActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="app.bicast.finma.MainActivity"
+            android:exported="false" />
+    </application>
+
+</manifest>

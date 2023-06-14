@@ -283,6 +283,7 @@ class EntryActivity : AppCompatActivity() {
             photo.compress(Bitmap.CompressFormat.JPEG, 100, bos)
             userPic = bos.toByteArray()
         }
+
     }
 
     private fun loadNames(textBox :AutoCompleteTextView){

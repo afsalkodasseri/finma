@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -15,37 +16,40 @@
         android:theme="@style/Theme.MyKotPure"
         tools:targetApi="31">
         <activity
-            android:name="app.bicast.finma.IndividualDebtActivity"
+            android:name=".ExpenseGroupsActivity"
             android:exported="false" />
         <activity
-            android:name="app.bicast.finma.NewBankBrsActivity"
+            android:name=".IndividualDebtActivity"
             android:exported="false" />
         <activity
-            android:name="app.bicast.finma.BankBRSActivity"
+            android:name=".NewBankBrsActivity"
             android:exported="false" />
         <activity
-            android:name="app.bicast.finma.NewExpenseActivity"
+            android:name=".BankBRSActivity"
             android:exported="false" />
         <activity
-            android:name="app.bicast.finma.ExpensesActivity"
+            android:name=".NewExpenseActivity"
             android:exported="false" />
         <activity
-            android:name="app.bicast.finma.DebtsActivity"
+            android:name=".ExpensesActivity"
             android:exported="false" />
         <activity
-            android:name="app.bicast.finma.EntryActivity"
+            android:name=".DebtsActivity"
             android:exported="false" />
         <activity
-            android:name="app.bicast.finma.IndividualsActivity"
+            android:name=".EntryActivity"
             android:exported="false" />
         <activity
-            android:name="app.bicast.finma.PaidActivity"
+            android:name=".IndividualsActivity"
             android:exported="false" />
         <activity
-            android:name="app.bicast.finma.ReceivedActivity"
+            android:name=".PaidActivity"
             android:exported="false" />
         <activity
-            android:name="app.bicast.finma.HomeActivity"
+            android:name=".ReceivedActivity"
+            android:exported="false" />
+        <activity
+            android:name=".HomeActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -54,7 +58,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="app.bicast.finma.MainActivity"
+            android:name=".MainActivity"
             android:exported="false" />
     </application>
 

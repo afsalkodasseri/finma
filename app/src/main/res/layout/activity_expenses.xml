@@ -27,6 +27,15 @@
             android:textSize="22sp" />
 
         <ImageView
+            android:id="@+id/iv_groups"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginVertical="5dp"
+            android:layout_marginEnd="10dp"
+            android:padding="5dp"
+            app:tint="@color/white"
+            app:srcCompat="@drawable/ic_groups" />
+        <ImageView
             android:id="@+id/iv_toolbar_back"
             android:layout_width="50dp"
             android:layout_height="50dp"

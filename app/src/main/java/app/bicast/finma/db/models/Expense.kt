@@ -14,13 +14,14 @@ class Expense (
     var description: String,
     var type: String,
     var dateTime: Long,
-    var brs: BankBrs? )
+    var brs: BankBrs?,
+    var group_id :String?)
     : Parcelable
 {
     private val sdf = SimpleDateFormat("dd-MM-yyyy", Locale.ENGLISH)
 
-    constructor(name: String,amount: Int,description: String,type: String,dateTime: Long,brsType : BankBrs.Typ):
-            this(null,name,amount, description, type, dateTime, BankBrs(null,"From $type Expense",if(type== NewExpenseActivity.ExpenseType.INCOME.toString())amount else -1*amount, brsType.toString(), dateTime,0))
+    constructor(name: String,amount: Int,description: String,type: String,dateTime: Long,brsType : BankBrs.Typ,group_id: String?):
+            this(null,name,amount, description, type, dateTime, BankBrs(null,"From $type Expense",if(type== NewExpenseActivity.ExpenseType.INCOME.toString())amount else -1*amount, brsType.toString(), dateTime,0),group_id)
 
     constructor(parcel: Parcel) : this(
         parcel.readValue(Int::class.java.classLoader) as? Int,
@@ -29,7 +30,8 @@ class Expense (
         parcel.readString()?:"",
         parcel.readString()?:"",
         parcel.readLong(),
-        parcel.readParcelable(BankBrs::class.java.classLoader)
+        parcel.readParcelable(BankBrs::class.java.classLoader),
+        parcel.readString()?:"",
     )
 
     fun getDate() :String{
@@ -44,6 +46,7 @@ class Expense (
         parcel.writeString(type)
         parcel.writeLong(dateTime)
         parcel.writeParcelable(brs, flags)
+        parcel.writeString(group_id)
     }
 
     override fun describeContents(): Int {

@@ -56,6 +56,10 @@ class ExpensesActivity : AppCompatActivity() {
         findViewById<ImageView>(R.id.iv_toolbar_back).setOnClickListener {
             onBackPressed()
         }
+
+        findViewById<ImageView>(R.id.iv_groups).setOnClickListener {
+            startActivity(Intent(this,ExpenseGroupsActivity::class.java))
+        }
         tvExpense.setOnClickListener {
             expenseType = 1
             loadEntries()

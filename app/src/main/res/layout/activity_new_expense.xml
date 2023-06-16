@@ -188,6 +188,14 @@
                 android:text="Bank" />
         </LinearLayout>
 
+        <Spinner
+            android:id="@+id/sp_groups"
+            android:layout_marginTop="20dp"
+            android:layout_marginHorizontal="30dp"
+            android:background="@drawable/text_box_primary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
         <Button
             android:id="@+id/bt_add"
             style="@style/ButtonPrimary"

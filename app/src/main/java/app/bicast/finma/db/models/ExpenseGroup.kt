@@ -2,11 +2,12 @@ package app.bicast.finma.db.models
 
 class ExpenseGroup (
     val id: Int?,
-    val name: String,
-    val icon: Int?,
-    val color: Int?){
+    var name: String?,
+    var color: String?,
+    val icon: ByteArray?,
+    var amount: Int?){
 
     override fun toString(): String {
-        return name
+        return name?:""
     }
 }

@@ -3,19 +3,25 @@ package app.bicast.finma
 import android.app.DatePickerDialog
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
+import android.widget.BaseAdapter
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import app.bicast.finma.db.dbSql
 import app.bicast.finma.db.models.BankBrs
 import app.bicast.finma.db.models.Expense
 import app.bicast.finma.R
+import app.bicast.finma.db.models.ExpenseGroup
 import com.google.android.material.tabs.TabLayout
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -36,10 +42,12 @@ class NewExpenseActivity : AppCompatActivity() {
     lateinit var tlType : TabLayout
     lateinit var brsType : LinearLayout
     lateinit var tvBrsType : TextView
+    lateinit var spGroups : Spinner
     lateinit var btAdd : Button
     var expense: Expense? = null
     var multiMode = false
     var BrsType = BankBrs.Typ.BANK
+    var expenseGroup :String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,6 +61,7 @@ class NewExpenseActivity : AppCompatActivity() {
         ivDelete = findViewById(R.id.iv_delete)
         brsType = findViewById(R.id.ll_brs_type)
         tvBrsType = findViewById(R.id.tv_brs_type)
+        spGroups = findViewById(R.id.sp_groups)
 
         findViewById<ImageView>(R.id.iv_toolbar_back).setOnClickListener {
             onBackPressed()
@@ -88,7 +97,7 @@ class NewExpenseActivity : AppCompatActivity() {
             multiMode = isChecked
         }
 
-        calTime.set(Calendar.HOUR,0)
+        calTime.set(Calendar.HOUR_OF_DAY,0)
         calTime.set(Calendar.MINUTE,0)
         calTime.set(Calendar.SECOND,0)
         calTime.set(Calendar.MILLISECOND,0)
@@ -129,7 +138,8 @@ class NewExpenseActivity : AppCompatActivity() {
                             description,
                             expenseType.toString(),
                             calTime.timeInMillis,
-                            brsType
+                            brsType,
+                            expenseGroup
                         )
                     )
 
@@ -146,6 +156,7 @@ class NewExpenseActivity : AppCompatActivity() {
                 val tempBrs = expense!!.brs ?: BankBrs(null,"From $expenseType Expense",if(expenseType== ExpenseType.INCOME)amount.toInt() else -1+amount.toInt(),brsType.toString(),calTime.timeInMillis,0)
                 tempBrs.type = brsType.toString()
                 expense!!.brs = tempBrs
+                expense!!.group_id = expenseGroup
                 db.upsertExpense(expense!!)
                 Toast.makeText(this, "Updated successfully", Toast.LENGTH_SHORT).show()
                 finish()
@@ -162,6 +173,33 @@ class NewExpenseActivity : AppCompatActivity() {
         }
 
         checkForUpdate()
+    }
+
+    private fun loadGroups(){
+        val groups = db.getExpenseGroups()
+        groups.add(0,ExpenseGroup(null,"Select Group",null,null,null))
+        val spGroupAdapter = ArrayAdapter(this,R.layout.list_item,groups)
+        spGroupAdapter.setDropDownViewResource(R.layout.list_item_dropped)
+        spGroups.adapter = spGroupAdapter
+        spGroups.onItemSelectedListener = object :AdapterView.OnItemSelectedListener{
+            override fun onItemSelected(
+                parent: AdapterView<*>?,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+                expenseGroup = groups.get(position).id?.toString()
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                Log.d("Selector","nothing")
+            }
+        }
+        if(expense!=null){
+            val index = groups.indexOfFirst { it.id.toString() == expenseGroup }
+            if(index>-1)
+                spGroups.setSelection(index)
+        }
     }
 
     private fun checkForUpdate(){
@@ -184,7 +222,10 @@ class NewExpenseActivity : AppCompatActivity() {
             expense!!.brs?:let{
                 brsType.visibility = View.GONE
             }
+            expenseGroup = expense!!.group_id
         }
+
+        loadGroups()
     }
 
 

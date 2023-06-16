@@ -7,11 +7,12 @@ import android.database.sqlite.SQLiteOpenHelper
 import app.bicast.finma.db.models.BankBrs
 import app.bicast.finma.db.models.Entry
 import app.bicast.finma.db.models.Expense
+import app.bicast.finma.db.models.ExpenseGroup
 import app.bicast.finma.db.models.HomeSummaryModel
 import app.bicast.finma.db.models.User
 import java.util.Calendar
 
-class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,2) {
+class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,3) {
     override fun onCreate(db: SQLiteDatabase?) {
         db?.execSQL("create table users(id integer primary key autoincrement, name text,phone text,photo blob)")
         db?.execSQL("create table entries(id integer primary key autoincrement, user_id integer,amount integer, description text,entry_date long,type text,brs integer, CONSTRAINT user_ids\n" +
@@ -19,15 +20,16 @@ class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,2) {
                 "REFERENCES users(id)\n" +
                 "ON DELETE CASCADE, constraint brs_ids foreign key (brs) references bank(id) on delete set null) ")
 
-        db?.execSQL("create table expenses(id integer primary key autoincrement, name text,amount integer,description text,expense_date long,type text,brs integer, constraint brs_ids foreign key (brs) references bank(id) on delete set null)")
+        db?.execSQL("create table expenses(id integer primary key autoincrement, name text,amount integer,description text,expense_date long,type text,brs integer,group_id integer, constraint brs_ids foreign key (brs) references bank(id) on delete set null,constraint group_ids foreign key (group_id) references expense_group(id) on delete set null)")
         db?.execSQL("create table bank(id integer primary key autoincrement, name text,amount integer,entry_date long,type text, monthly_type integer)")
+        db?.execSQL("create table expense_group(id integer primary key autoincrement, name text,color text,icon blob)")
     }
 
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
         if(oldVersion < 2){
             updateDB_1_2(db)
-//        }else if(oldVersion < 5){
-//            updateDB_4_5(db)
+        }else if(oldVersion < 3){
+            updateDB_2_3(db)
         }else {
             db?.execSQL("drop table if exists users")
             db?.execSQL("drop table if exists entries")
@@ -46,9 +48,10 @@ class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,2) {
         db?.execSQL("alter table bank add column monthly_type integer")
     }
 
-//    private fun updateDB_3_4(db: SQLiteDatabase?){
-//        db?.execSQL("create table IF NOT EXISTS expenses(id integer primary key autoincrement, name text,amount integer,description text,expense_date long,type text)")
-//    }
+    private fun updateDB_2_3(db: SQLiteDatabase?){
+        db?.execSQL("create table expense_group(id integer primary key autoincrement, name text,color text,icon blob)")
+        db?.execSQL("ALTER TABLE expenses ADD COLUMN group_id integer references expense_group(id) on delete set null")
+    }
 //
 //    private fun updateDB_4_5(db: SQLiteDatabase?){
 //        db?.execSQL("create table if not exists bank(id integer primary key autoincrement, name text,amount integer,entry_date long,type text)")
@@ -56,6 +59,47 @@ class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,2) {
 //        db?.execSQL("ALTER TABLE expenses ADD COLUMN brs integer references bank(id) on delete set null")
 //    }
 
+
+    //Expense Group
+    fun addExpenseGroup(group : ExpenseGroup) :Long{
+        val db = this.writableDatabase;
+        val  cv = ContentValues()
+        cv.put("name",group.name)
+        cv.put("color",group.color)
+        cv.put("icon",group.icon)
+        return db.insert("expense_group",null,cv)
+    }
+
+    fun updateExpenseGroup(group : ExpenseGroup) :Int{
+        val db = this.writableDatabase;
+        val  cv = ContentValues()
+        cv.put("name",group.name)
+        cv.put("color",group.color)
+        cv.put("icon",group.icon)
+        return db.update("expense_group",cv,"id = ?", arrayOf(group.id.toString()))
+    }
+
+    fun deleteExpenseGroup(group: ExpenseGroup) :Int{
+        val db = this.writableDatabase;
+        return db.delete("expense_group","id = ?", arrayOf(group.id.toString()))
+    }
+
+    fun getExpenseGroups() :ArrayList<ExpenseGroup>{
+        val db = readableDatabase
+        val crs = db.rawQuery("select * from expense_group",null)
+        val result :ArrayList<ExpenseGroup> = ArrayList()
+        if(crs.moveToFirst()){
+            do {
+                result.add(
+                    ExpenseGroup(crs.getInt(0),crs.getString(1),crs.getString(2),crs.getBlob(3),null
+                    )
+                )
+            }while (crs.moveToNext())
+        }
+        return result
+    }
+
+    //User
     fun addUser(user : User) :Long{
         val db = this.writableDatabase
         val  cv = ContentValues()
@@ -207,6 +251,7 @@ class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,2) {
         cv.put("expense_date",entry.dateTime)
         cv.put("type",entry.type)
         cv.put("brs",entry.brs!!.id)
+        cv.put("group_id",entry.group_id)
         return db.insert("expenses",null,cv)
     }
 
@@ -219,6 +264,7 @@ class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,2) {
         cv.put("expense_date",entry.dateTime)
         cv.put("type",entry.type)
         cv.put("brs",entry.brs!!.id)
+        cv.put("group_id",entry.group_id)
         return db.update("expenses",cv,"id = ?", arrayOf(entry.id.toString()))
     }
 
@@ -235,7 +281,7 @@ class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,2) {
             2->typeQuery = " and expenses.type = 'INCOME'"
         }
 
-        val crs = db.rawQuery("select * from expenses left join bank on brs = bank.id where expense_date between $startTime and $endTime $typeQuery order by expense_date desc",null)
+        val crs = db.rawQuery("select *,date(expense_date/1000,'unixepoch','localtime') as date from expenses left join bank on brs = bank.id where expense_date between $startTime and $endTime $typeQuery order by date desc, id desc",null)
         val result :ArrayList<Expense> = ArrayList()
         if(crs.moveToFirst()){
             do {
@@ -243,11 +289,25 @@ class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,2) {
                 if(crs.getString(8)==null){
                     brs = null
                 }else{
-                    brs = BankBrs(crs.getInt(7),crs.getString(8),crs.getInt(9),crs.getString(11),crs.getLong(10),crs.getInt(12))
+                    brs = BankBrs(crs.getInt(8),crs.getString(9),crs.getInt(10),crs.getString(12),crs.getLong(11),crs.getInt(13))
                 }
                 result.add(
                     Expense(crs.getInt(0),crs.getString(1),crs.getInt(2),crs.getString(3),crs.getString(5),crs.getLong(4),
-                    brs)
+                    brs,crs.getString(7))
+                )
+            }while (crs.moveToNext())
+        }
+        return result
+    }
+
+    fun getExpenseMonthGrouped(startTime: Long,endTime: Long) :ArrayList<ExpenseGroup>{
+        val db = readableDatabase
+        val crs = db.rawQuery("select sum(amount),expense_group.* from expenses left join expense_group on group_id = expense_group.id where expense_date between $startTime and $endTime and  expenses.type='EXPENSE' GROUP by group_id order by expense_date desc",null)
+        val result :ArrayList<ExpenseGroup> = ArrayList()
+        if(crs.moveToFirst()){
+            do {
+                result.add(
+                    ExpenseGroup(crs.getInt(1),crs.getString(2),crs.getString(3),crs.getBlob(4),crs.getInt(0))
                 )
             }while (crs.moveToNext())
         }

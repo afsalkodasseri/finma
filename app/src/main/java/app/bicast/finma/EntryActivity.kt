@@ -160,7 +160,7 @@ class EntryActivity : AppCompatActivity() {
             tvBrsType.setText(BrsType.toString())
         }
 
-        calTime.set(Calendar.HOUR,0)
+        calTime.set(Calendar.HOUR_OF_DAY,0)
         calTime.set(Calendar.MINUTE,0)
         calTime.set(Calendar.SECOND,0)
         calTime.set(Calendar.MILLISECOND,0)

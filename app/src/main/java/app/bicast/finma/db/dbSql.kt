@@ -314,6 +314,28 @@ class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,3) {
         return result
     }
 
+    fun getExpenseAllMonthGrouped(startTime: Long,endTime: Long) :ArrayList<Expense>{
+        val db = readableDatabase
+        val crs = db.rawQuery("select * from expenses left join bank on brs = bank.id left join expense_group on group_id = expense_group.id where expense_date between $startTime and $endTime and  expenses.type='EXPENSE' order by expense_date desc",null)
+        val result :ArrayList<Expense> = ArrayList()
+        if(crs.moveToFirst()){
+            do {
+                val brs : BankBrs?
+                if(crs.getString(8)==null){
+                    brs = null
+                }else{
+                    brs = BankBrs(crs.getInt(8),crs.getString(9),crs.getInt(10),crs.getString(12),crs.getLong(11),crs.getInt(13))
+                }
+                result.add(
+                    Expense(crs.getInt(0),crs.getString(1),crs.getInt(2),crs.getString(3),crs.getString(5),crs.getLong(4),
+                        brs,crs.getString(7))
+                )
+            }while (crs.moveToNext())
+        }
+        return result
+    }
+
+
     //BRS
 
     fun addBrs(entry : BankBrs) :Long{

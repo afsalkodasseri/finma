@@ -6,6 +6,7 @@ import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
+import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.widget.Button
@@ -22,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.Orientation
 import app.bicast.finma.adapter.ColorsRecyAdapter
 import app.bicast.finma.adapter.ExpenseGroupsRecyAdapter
+import app.bicast.finma.adapter.ExpensesRecyAdapter
 import app.bicast.finma.db.dbSql
 import app.bicast.finma.db.models.Expense
 import app.bicast.finma.db.models.ExpenseGroup
@@ -37,8 +39,10 @@ import java.util.Locale
 
 class ExpenseGroupsActivity : AppCompatActivity() {
     lateinit var recyGroups: RecyclerView
+    lateinit var recyExpenses: RecyclerView
     lateinit var tvExpense: TextView
     lateinit var tvMonth: TextView
+    lateinit var tvSortBy: TextView
     lateinit var ivBackMonth: ImageView
     lateinit var ivNextMonth: ImageView
     var totalExpense :Int = 0
@@ -52,6 +56,8 @@ class ExpenseGroupsActivity : AppCompatActivity() {
     val db = dbSql(this)
     var filterItems :ArrayList<Int?> = ArrayList()
     var expenseItems :ArrayList<ExpenseGroup> = ArrayList()
+    var expenseEntryItems :ArrayList<Expense> = ArrayList()
+    var sortMode = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,9 +70,11 @@ class ExpenseGroupsActivity : AppCompatActivity() {
 
         tvExpense = findViewById(R.id.tv_total_expense)
         tvMonth = findViewById(R.id.tv_month)
+        tvSortBy = findViewById(R.id.tv_sort)
         ivBackMonth = findViewById(R.id.iv_prev_month)
         ivNextMonth = findViewById(R.id.iv_next_month)
         recyGroups = findViewById(R.id.recy_groups)
+        recyExpenses = findViewById(R.id.recy_entries)
         donutProgressbar = findViewById(R.id.donut_view)
         findViewById<ImageView>(R.id.iv_toolbar_back).setOnClickListener {
             onBackPressed()
@@ -101,6 +109,14 @@ class ExpenseGroupsActivity : AppCompatActivity() {
             }
         }
 
+        tvSortBy.setOnClickListener {
+            if (sortMode==4)
+                sortMode = 1
+            else
+                sortMode++
+            filterExpense()
+        }
+
         loadMonthTimes()
     }
 
@@ -124,8 +140,15 @@ class ExpenseGroupsActivity : AppCompatActivity() {
             donutProgressbar.submitData(sectionList)
         }
 
-
+        loadExpenses()
         loadGroups(expenseItems)
+    }
+
+    private fun loadExpenses(){
+        expenseEntryItems = db.getExpenseAllMonthGrouped(startTime, endTime)
+        val adapterEntries = ExpensesRecyAdapter(expenseEntryItems)
+        recyExpenses.adapter = adapterEntries
+        recyExpenses.layoutManager = LinearLayoutManager(this)
     }
 
     private fun loadGroups(groupList: List<ExpenseGroup>){
@@ -171,6 +194,33 @@ class ExpenseGroupsActivity : AppCompatActivity() {
             donutProgressbar.cap = totalExpense.toFloat()
             donutProgressbar.submitData(sectionList)
         }
+
+        //for expense entries
+        val filteredExpenseEntries = ArrayList<Expense>()
+        for(item :Expense in expenseEntryItems){
+            if(!filterItems.contains(item.group_id?.toInt()))
+                filteredExpenseEntries.add(item)
+        }
+        when (sortMode){
+            1-> {
+                tvSortBy.setText("Sort By Date -D")
+                filteredExpenseEntries.sortByDescending { it.dateTime }
+            }
+            2-> {
+                tvSortBy.setText("Sort By Amount -D")
+                filteredExpenseEntries.sortByDescending { it.amount }
+            }
+            3-> {
+                tvSortBy.setText("Sort By Date -A")
+                filteredExpenseEntries.sortBy { it.dateTime }
+            }
+            4-> {
+                tvSortBy.setText("Sort By Amount -A")
+                filteredExpenseEntries.sortBy { it.amount }
+            }
+        }
+        val adapterEntries = ExpensesRecyAdapter(filteredExpenseEntries)
+        recyExpenses.adapter = adapterEntries
     }
 
     override fun onResume() {

@@ -37,6 +37,7 @@ class PeopleRecyAdapter (val items :List<User>) : RecyclerView.Adapter<PeopleRec
             holder.itemView.context.startActivity(
                 Intent(holder.itemView.context, IndividualDebtActivity::class.java)
                     .putExtra("user_id",items[position].id)
+                    .putExtra("user_name",items[position].name)
             )
         }
     }

@@ -55,6 +55,7 @@ class EntryActivity : AppCompatActivity() {
     lateinit var btAdd : Button
     var entry: Entry? = null
     var BrsType = BankBrs.Typ.BANK
+    var selectedUserName = ""
 
     @SuppressLint("Range")
     val getContent = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -134,6 +135,7 @@ class EntryActivity : AppCompatActivity() {
         }
 
         entry = intent.getParcelableExtra<Entry>("entry_id")
+        selectedUserName = intent.getStringExtra("user_name").toString()
 
         tlType = findViewById(R.id.tl_type)
         tlType.addOnTabSelectedListener(object :TabLayout.OnTabSelectedListener{
@@ -294,6 +296,9 @@ class EntryActivity : AppCompatActivity() {
         val adapterNames = ArrayAdapter(this,android.R.layout.simple_list_item_1,namesArray)
         textBox.setAdapter(adapterNames)
         textBox.threshold = 1
+
+        if(!selectedUserName.isEmpty())
+            etName.setText(selectedUserName)
     }
 
     private fun clearEntry(etName :EditText,etAmount :EditText,etDescription :EditText,tvDate :TextView){

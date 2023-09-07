@@ -14,12 +14,14 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 class IndividualDebtActivity : AppCompatActivity() {
     val db: dbSql = dbSql(this)
     lateinit var recyItems : RecyclerView
-    var userId = 0;
+    var userId = 0
+    var userName = ""
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_individual_debt)
 
         userId = intent.getIntExtra("user_id",0)
+        userName = intent.getStringExtra("user_name").toString()
 
         val fabAdd : FloatingActionButton = findViewById(R.id.fb_add)
         recyItems = findViewById(R.id.recy_peoples)
@@ -27,7 +29,8 @@ class IndividualDebtActivity : AppCompatActivity() {
             onBackPressed()
         }
         fabAdd.setOnClickListener {
-            startActivity(Intent(this, EntryActivity::class.java))
+            startActivity(Intent(this, EntryActivity::class.java)
+                .putExtra("user_name",userName))
         }
 
 

@@ -43,6 +43,8 @@ class HomeActivity : AppCompatActivity() {
         val cardAccounts = findViewById<CardView>(R.id.card_accounts)
         val cardIndividuals = findViewById<CardView>(R.id.card_individuals)
         val cardExpenses = findViewById<CardView>(R.id.card_expense)
+        val cardWork = findViewById<CardView>(R.id.card_work)
+        val cardMinBal = findViewById<CardView>(R.id.card_minimum_balances)
         ivWarning = findViewById(R.id.iv_warning)
 
         tvSummaryDebt = findViewById(R.id.tv_debts_summary)
@@ -82,6 +84,14 @@ class HomeActivity : AppCompatActivity() {
 
         cardExpenses.setOnClickListener {
             startActivity(Intent(this, ExpensesActivity::class.java))
+        }
+
+        cardWork.setOnClickListener{
+            startActivity(Intent(this, WorkHomeActivity::class.java))
+        }
+
+        cardMinBal.setOnClickListener{
+            startActivity(Intent(this, MinBalActivity::class.java))
         }
     }
 

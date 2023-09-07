@@ -227,6 +227,9 @@ class EntryActivity : AppCompatActivity() {
                 entry!!.dateTime = calTime.timeInMillis
                 val tempBrs = entry!!.brs ?: BankBrs(null,"From $entryType Entry",if(entryType== PaymentType.RECEIVED)amount.toInt() else -1+amount.toInt(),brsType.toString(),calTime.timeInMillis,0)
                 tempBrs.type = brsType.toString()
+                tempBrs.name = "From $entryType Entry"
+                tempBrs.amount = if(entryType== PaymentType.RECEIVED)amount.toInt() else -1+amount.toInt()
+                tempBrs.dateTime = calTime.timeInMillis
                 entry!!.brs = tempBrs
                 db.addNewEntry(entry!!)
                 Toast.makeText(this, "Updated successfully", Toast.LENGTH_SHORT).show()

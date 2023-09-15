@@ -227,10 +227,10 @@ class EntryActivity : AppCompatActivity() {
                 entry!!.description = description
                 entry!!.type = entryType.toString()
                 entry!!.dateTime = calTime.timeInMillis
-                val tempBrs = entry!!.brs ?: BankBrs(null,"From $entryType Entry",if(entryType== PaymentType.RECEIVED)amount.toInt() else -1+amount.toInt(),brsType.toString(),calTime.timeInMillis,0)
+                val tempBrs = entry!!.brs ?: BankBrs(null,"From $entryType Entry",if(entryType== PaymentType.RECEIVED)amount.toInt() else -1*amount.toInt(),brsType.toString(),calTime.timeInMillis,0)
                 tempBrs.type = brsType.toString()
                 tempBrs.name = "From $entryType Entry"
-                tempBrs.amount = if(entryType== PaymentType.RECEIVED)amount.toInt() else -1+amount.toInt()
+                tempBrs.amount = if(entryType== PaymentType.RECEIVED)amount.toInt() else -1*amount.toInt()
                 tempBrs.dateTime = calTime.timeInMillis
                 entry!!.brs = tempBrs
                 db.addNewEntry(entry!!)

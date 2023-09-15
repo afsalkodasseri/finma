@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Finma</string>
+    <string name="new_expense">New Expense</string>
 </resources>

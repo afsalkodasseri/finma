@@ -153,10 +153,10 @@ class NewExpenseActivity : AppCompatActivity() {
                 expense!!.name = name
                 expense!!.type = expenseType.toString()
                 expense!!.dateTime = calTime.timeInMillis
-                val tempBrs = expense!!.brs ?: BankBrs(null,"From $expenseType Expense",if(expenseType== ExpenseType.INCOME)amount.toInt() else -1+amount.toInt(),brsType.toString(),calTime.timeInMillis,0)
+                val tempBrs = expense!!.brs ?: BankBrs(null,"From $expenseType Expense",if(expenseType== ExpenseType.INCOME)amount.toInt() else -1*amount.toInt(),brsType.toString(),calTime.timeInMillis,0)
                 tempBrs.type = brsType.toString()
                 tempBrs.name = "From $expenseType Expense"
-                tempBrs.amount = if(expenseType== ExpenseType.INCOME)amount.toInt() else -1+amount.toInt()
+                tempBrs.amount = if(expenseType== ExpenseType.INCOME)amount.toInt() else -1*amount.toInt()
                 tempBrs.dateTime = calTime.timeInMillis
                 expense!!.brs = tempBrs
                 expense!!.group_id = expenseGroup

@@ -20,6 +20,7 @@ import app.bicast.finma.db.models.WorkEvent
 import app.bicast.finma.utils.DateUtils
 import app.futured.donut.DonutProgressView
 import app.futured.donut.DonutSection
+import java.util.Calendar
 import java.util.Date
 
 
@@ -160,5 +161,11 @@ class HomeActivity : AppCompatActivity() {
 
         val holidaysLeft = db.getWorkEvent(Date().time,DateUtils.yearEndTime(), WorkEvent.Typ.HOLIDAY.toString())
         tvHolidayLeft.setText(holidaysLeft.size.toString()+" holidays")
+
+        val totalSum: Int = db.getBalanceForMonth(DateUtils.monthStartTime(), DateUtils.monthEndTime())
+        val tempCal = Calendar.getInstance()
+        val totalDay = tempCal.getActualMaximum(Calendar.DAY_OF_MONTH)
+        val averageBalance = totalSum / totalDay
+        tvMinBalance.setText("$averageBalance")
     }
 }

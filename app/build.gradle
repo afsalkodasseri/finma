@@ -54,4 +54,5 @@ dependencies {
     implementation platform('com.google.firebase:firebase-bom:32.1.0')
     implementation 'com.google.firebase:firebase-messaging-ktx'
     implementation 'com.github.afsalkodasseri:KalendarView:2.6'
+    implementation 'com.itextpdf:itextg:5.5.10'
 }

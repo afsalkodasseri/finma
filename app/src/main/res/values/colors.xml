@@ -14,5 +14,7 @@
     <color name="work_holiday">#FB1D32</color>
     <color name="work_leave">#249C29</color>
     <color name="work_wfh">#0F9588</color>
+    <color name="balance_green">#39CC3F</color>
+    <color name="balance_red">#F31717</color>
 
 </resources>

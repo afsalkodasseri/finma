@@ -4,8 +4,11 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Log
+import app.bicast.finma.db.models.BalanceRowItem
 import app.bicast.finma.db.models.BankBrs
 import app.bicast.finma.db.models.Entry
+import app.bicast.finma.db.models.EntryRowItem
 import app.bicast.finma.db.models.Expense
 import app.bicast.finma.db.models.ExpenseGroup
 import app.bicast.finma.db.models.HomeSummaryModel
@@ -13,7 +16,7 @@ import app.bicast.finma.db.models.User
 import app.bicast.finma.db.models.WorkEvent
 import java.util.Calendar
 
-class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,4) {
+class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,5) {
     override fun onCreate(db: SQLiteDatabase?) {
         db?.execSQL("create table users(id integer primary key autoincrement, name text,phone text,photo blob)")
         db?.execSQL("create table entries(id integer primary key autoincrement, user_id integer,amount integer, description text,entry_date long,type text,brs integer, CONSTRAINT user_ids\n" +
@@ -26,6 +29,8 @@ class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,4) {
         db?.execSQL("create table expense_group(id integer primary key autoincrement, name text,color text,icon blob)")
 
         db?.execSQL("create table events_work(event_id integer primary key autoincrement,event_type text, event_description text,event_date long)")
+        db?.execSQL("create table balance_entry (id integer primary key autoincrement,date long,amount int,type text)")
+        db?.execSQL("create table balances (id integer primary key autoincrement,month text,amount int)")
     }
 
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
@@ -35,6 +40,8 @@ class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,4) {
             updateDB_2_3(db)
         }else if(oldVersion < 4){
             updateDB_3_4(db)
+        }else if(oldVersion < 5){
+            updateDB_4_5(db)
         }else {
             db?.execSQL("drop table if exists users")
             db?.execSQL("drop table if exists entries")
@@ -42,6 +49,8 @@ class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,4) {
             db?.execSQL("drop table if exists bank")
             db?.execSQL("drop table if exists expense_group")
             db?.execSQL("drop table if exists events_work")
+            db?.execSQL("drop table if exists balance_entry")
+            db?.execSQL("drop table if exists balances")
             onCreate(db)
         }
     }
@@ -61,6 +70,10 @@ class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,4) {
     }
     private fun updateDB_3_4(db: SQLiteDatabase?){
         db?.execSQL("create table events_work(event_id integer primary key autoincrement,event_type text, event_description text,event_date long)")
+    }
+    private fun updateDB_4_5(db: SQLiteDatabase?){
+        db?.execSQL("create table balance_entry (id integer primary key autoincrement,date long,amount int,type text)")
+        db?.execSQL("create table balances (id integer primary key autoincrement,month text,amount int)")
     }
 //
 //    private fun updateDB_4_5(db: SQLiteDatabase?){
@@ -479,6 +492,101 @@ class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,4) {
             do {
                 result.add(WorkEvent(crs.getInt(0),crs.getString(1),crs.getString(2),crs.getLong(3)))
             }while (crs.moveToNext())
+        }
+        return result
+    }
+
+
+    fun insertEntry(entry: EntryRowItem) {
+        val db = this.writableDatabase
+        val cv = ContentValues()
+        cv.put("date", entry.date)
+        cv.put("amount", entry.amount)
+        cv.put("type", entry.type)
+        db.insert("balance_entry", null, cv)
+    }
+
+    fun updateEntry(entry: EntryRowItem): Int {
+        val db = this.writableDatabase
+        val cv = ContentValues()
+        cv.put("date", entry.date)
+        cv.put("amount", entry.amount)
+        cv.put("type", entry.type)
+        return db.update("balance_entry", cv, "date=?", arrayOf(entry.date.toString()))
+    }
+
+    fun upsertEntry(entry: EntryRowItem) {
+        if (updateEntry(entry) == 0) insertEntry(entry)
+    }
+
+    fun upsertEntries(entries: List<EntryRowItem>) {
+        for (i in entries.indices) {
+            upsertEntry(entries[i])
+        }
+    }
+
+    fun getMinBalEntries(startTime: Long, endTime: Long): List<EntryRowItem> {
+        val result: ArrayList<EntryRowItem> = ArrayList()
+        val db = this.readableDatabase
+        val crs = db.rawQuery("select * from balance_entry where date between $startTime and $endTime", null)
+        try {
+            if (crs.moveToFirst()) {
+                do {
+                    result.add(EntryRowItem(crs.getLong(1), crs.getInt(2), crs.getString(3)))
+                } while (crs.moveToNext())
+            }
+        } catch (e: Exception) {
+            Log.d("EXE", e.toString())
+        }
+        return result
+    }
+
+    fun getBalanceForMonth(startTime: Long, endTime: Long): Int {
+        var result = 0
+        val db = this.readableDatabase
+        val crs = db.rawQuery("select sum(amount) from balance_entry where date between $startTime and $endTime", null)
+        try {
+            if (crs.moveToFirst()) {
+                result = crs.getInt(0)
+            }
+        } catch (e: Exception) {
+            Log.d("EXE", e.toString())
+        }
+        return result
+    }
+
+    fun insertBalance(month: Long, balance: String?) {
+        val db = this.writableDatabase
+        val cv = ContentValues()
+        cv.put("month", month)
+        cv.put("amount", balance)
+        db.insert("balances", null, cv)
+    }
+
+    fun updateBalance(month: Long, balance: String?): Int {
+        val db = this.writableDatabase
+        val cv = ContentValues()
+        cv.put("month", month)
+        cv.put("amount", balance)
+        return db.update("balances", cv, "month=?", arrayOf(month.toString()))
+    }
+
+    fun upsertBalance(month: Long, balance: String?) {
+        if (updateBalance(month, balance) == 0) insertBalance(month, balance)
+    }
+
+    fun getBalances(month: String): List<BalanceRowItem> {
+        val result: ArrayList<BalanceRowItem> = ArrayList()
+        val db = this.readableDatabase
+        val crs = db.rawQuery("select * from balances where month = '$month'", null)
+        try {
+            if (crs.moveToFirst()) {
+                do {
+                    result.add(BalanceRowItem(crs.getLong(1), crs.getString(2)))
+                } while (crs.moveToNext())
+            }
+        } catch (e: Exception) {
+            Log.d("EXE", e.toString())
         }
         return result
     }

@@ -135,7 +135,7 @@ class EntryActivity : AppCompatActivity() {
         }
 
         entry = intent.getParcelableExtra<Entry>("entry_id")
-        selectedUserName = intent.getStringExtra("user_name").toString()
+        selectedUserName = intent.getStringExtra("user_name")?:""
 
         tlType = findViewById(R.id.tl_type)
         tlType.addOnTabSelectedListener(object :TabLayout.OnTabSelectedListener{

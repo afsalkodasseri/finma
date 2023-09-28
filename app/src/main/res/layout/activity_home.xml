@@ -576,7 +576,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/montserrat_medium"
-                                android:text="0 people"
+                                android:text="0 rupees"
                                 android:textSize="12sp"
                                 android:textColor="@color/grey_text" />
                         </LinearLayout>

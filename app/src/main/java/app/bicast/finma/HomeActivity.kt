@@ -16,9 +16,11 @@ import androidx.core.content.ContextCompat
 import app.bicast.finma.R
 import app.bicast.finma.db.dbSql
 import app.bicast.finma.db.models.HomeSummaryModel
+import app.bicast.finma.db.models.WorkEvent
 import app.bicast.finma.utils.DateUtils
 import app.futured.donut.DonutProgressView
 import app.futured.donut.DonutSection
+import java.util.Date
 
 
 class HomeActivity : AppCompatActivity() {
@@ -35,6 +37,8 @@ class HomeActivity : AppCompatActivity() {
     lateinit var tvTotalDebts :TextView
     lateinit var tvPercentage :TextView
     lateinit var donutProgressbar :DonutProgressView
+    lateinit var tvHolidayLeft :TextView
+    lateinit var tvMinBalance :TextView
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
@@ -57,6 +61,8 @@ class HomeActivity : AppCompatActivity() {
         tvTotalBalance = findViewById(R.id.tv_total_balance)
         tvPercentage = findViewById(R.id.tv_percentage)
         donutProgressbar = findViewById(R.id.donut_view)
+        tvHolidayLeft = findViewById(R.id.tv_work_summary)
+        tvMinBalance = findViewById(R.id.tv_min_bal_summary)
 
         if (checkPermission())
             ivWarning.visibility = View.GONE
@@ -151,5 +157,8 @@ class HomeActivity : AppCompatActivity() {
         }else{
             tvPercentage.setText("0%")
         }
+
+        val holidaysLeft = db.getWorkEvent(Date().time,DateUtils.yearEndTime(), WorkEvent.Typ.HOLIDAY.toString())
+        tvHolidayLeft.setText(holidaysLeft.size.toString()+" holidays")
     }
 }

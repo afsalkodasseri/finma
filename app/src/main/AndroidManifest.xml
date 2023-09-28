@@ -16,6 +16,9 @@
         android:theme="@style/Theme.MyKotPure"
         tools:targetApi="31">
         <activity
+            android:name=".NewWorkEventActivity"
+            android:exported="false" />
+        <activity
             android:name=".MinBalActivity"
             android:exported="false" />
         <activity
@@ -59,10 +62,12 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!--Shortcuts-->
-            <meta-data android:name="android.app.shortcuts"
+            <!-- Shortcuts -->
+            <meta-data
+                android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
         </activity>
         <activity
@@ -75,8 +80,7 @@
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
-        </service>
-        <!--Firebase Notification-->
+        </service> <!-- Firebase Notification -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/ic_notification" />

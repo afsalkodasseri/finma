@@ -10,9 +10,10 @@ import app.bicast.finma.db.models.Expense
 import app.bicast.finma.db.models.ExpenseGroup
 import app.bicast.finma.db.models.HomeSummaryModel
 import app.bicast.finma.db.models.User
+import app.bicast.finma.db.models.WorkEvent
 import java.util.Calendar
 
-class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,3) {
+class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,4) {
     override fun onCreate(db: SQLiteDatabase?) {
         db?.execSQL("create table users(id integer primary key autoincrement, name text,phone text,photo blob)")
         db?.execSQL("create table entries(id integer primary key autoincrement, user_id integer,amount integer, description text,entry_date long,type text,brs integer, CONSTRAINT user_ids\n" +
@@ -23,6 +24,8 @@ class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,3) {
         db?.execSQL("create table expenses(id integer primary key autoincrement, name text,amount integer,description text,expense_date long,type text,brs integer,group_id integer, constraint brs_ids foreign key (brs) references bank(id) on delete set null,constraint group_ids foreign key (group_id) references expense_group(id) on delete set null)")
         db?.execSQL("create table bank(id integer primary key autoincrement, name text,amount integer,entry_date long,type text, monthly_type integer)")
         db?.execSQL("create table expense_group(id integer primary key autoincrement, name text,color text,icon blob)")
+
+        db?.execSQL("create table events_work(event_id integer primary key autoincrement,event_type text, event_description text,event_date long)")
     }
 
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
@@ -30,11 +33,15 @@ class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,3) {
             updateDB_1_2(db)
         }else if(oldVersion < 3){
             updateDB_2_3(db)
+        }else if(oldVersion < 4){
+            updateDB_3_4(db)
         }else {
             db?.execSQL("drop table if exists users")
             db?.execSQL("drop table if exists entries")
             db?.execSQL("drop table if exists expenses")
             db?.execSQL("drop table if exists bank")
+            db?.execSQL("drop table if exists expense_group")
+            db?.execSQL("drop table if exists events_work")
             onCreate(db)
         }
     }
@@ -51,6 +58,9 @@ class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,3) {
     private fun updateDB_2_3(db: SQLiteDatabase?){
         db?.execSQL("create table expense_group(id integer primary key autoincrement, name text,color text,icon blob)")
         db?.execSQL("ALTER TABLE expenses ADD COLUMN group_id integer references expense_group(id) on delete set null")
+    }
+    private fun updateDB_3_4(db: SQLiteDatabase?){
+        db?.execSQL("create table events_work(event_id integer primary key autoincrement,event_type text, event_description text,event_date long)")
     }
 //
 //    private fun updateDB_4_5(db: SQLiteDatabase?){
@@ -423,6 +433,54 @@ class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,3) {
         }
 
         return homeSummaryModel
+    }
+
+    //work events
+
+    fun addWorkEvent(item: WorkEvent) :Long{
+        val db = this.writableDatabase;
+        val  cv = ContentValues()
+        cv.put("event_type",item.type)
+        cv.put("event_description",item.description)
+        cv.put("event_date",item.date)
+        return db.insert("events_work",null,cv)
+    }
+
+    fun updateWorkEvent(item : WorkEvent) :Int{
+        val db = this.writableDatabase;
+        val  cv = ContentValues()
+        cv.put("event_type",item.type)
+        cv.put("event_description",item.description)
+        cv.put("event_date",item.date)
+        return db.update("events_work",cv,"event_id = ?", arrayOf(item.id.toString()))
+    }
+
+    fun deleteWorkEvent(item : WorkEvent) :Int{
+        val db = this.writableDatabase;
+        return db.delete("events_work","event_id = ?", arrayOf(item.id.toString()))
+    }
+
+    fun getWorkEvent(startTime: Long, endTime: Long) :ArrayList<WorkEvent>{
+        val db = readableDatabase
+        val crs = db.rawQuery("select * from events_work where event_date between $startTime and $endTime",null)
+        val result :ArrayList<WorkEvent> = ArrayList()
+        if(crs.moveToFirst()){
+            do {
+                result.add(WorkEvent(crs.getInt(0),crs.getString(1),crs.getString(2),crs.getLong(3)))
+            }while (crs.moveToNext())
+        }
+        return result
+    }
+    fun getWorkEvent(startTime: Long, endTime: Long, type :String) :ArrayList<WorkEvent>{
+        val db = readableDatabase
+        val crs = db.rawQuery("select * from events_work where event_date between $startTime and $endTime and event_type = '$type'",null)
+        val result :ArrayList<WorkEvent> = ArrayList()
+        if(crs.moveToFirst()){
+            do {
+                result.add(WorkEvent(crs.getInt(0),crs.getString(1),crs.getString(2),crs.getLong(3)))
+            }while (crs.moveToNext())
+        }
+        return result
     }
 
 }

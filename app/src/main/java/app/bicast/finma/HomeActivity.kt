@@ -3,8 +3,8 @@ package app.bicast.finma
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
 import android.util.Log
 import android.view.MenuInflater
 import android.view.View
@@ -23,8 +23,11 @@ import app.bicast.finma.utils.OnSwipeTouchListener
 import app.futured.donut.DonutProgressView
 import app.futured.donut.DonutSection
 import org.json.JSONObject
+import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream
+import java.io.InputStream
+import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -144,7 +147,7 @@ class HomeActivity : AppCompatActivity() {
                     backup()
                 }
                 R.id.restore-> {
-                    restore()
+                    restoreFile()
                 }
             }
             true
@@ -174,6 +177,27 @@ class HomeActivity : AppCompatActivity() {
         loadSummary()
     }
 
+    fun restore(uri: Uri){
+        try {
+            val `in`: InputStream? = contentResolver.openInputStream(uri)
+            val r = BufferedReader(InputStreamReader(`in`))
+            val total = StringBuilder()
+            var line: String?
+            while (r.readLine().also { line = it } != null) {
+                total.append(line).append('\n')
+            }
+            val inputAsString = total.toString()
+            val jbData = JSONObject(inputAsString)
+            val dataVersion = jbData.getInt("version")
+            Toast.makeText(this,"version",Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Toast.makeText(this,"e $e",Toast.LENGTH_SHORT).show()
+        }
+
+//        db.putMetadata(jbData)
+//        loadSummary()
+    }
+
     fun saveBackup(file :File){
         val cachePath = File(getCacheDir(), "backups")
         val newFile = File(cachePath,  "Records.txt")
@@ -190,6 +214,24 @@ class HomeActivity : AppCompatActivity() {
             shareIntent.setDataAndType(contentUri, contentResolver.getType(contentUri))
             shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri)
             startActivity(Intent.createChooser(shareIntent, "Choose an app"))
+        }
+    }
+
+    fun restoreFile(){
+        val intent = Intent()
+            .setType("*/*")
+            .setAction(Intent.ACTION_GET_CONTENT)
+        startActivityForResult(Intent.createChooser(intent, "Select a file"), 111)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == 111 && resultCode == RESULT_OK) {
+            val selectedFile = data?.data // The URI with the location of the file
+            if (selectedFile != null) {
+                restore(selectedFile)
+            }
         }
     }
 

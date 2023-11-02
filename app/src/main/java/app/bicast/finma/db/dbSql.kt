@@ -2,8 +2,10 @@ package app.bicast.finma.db
 
 import android.content.ContentValues
 import android.content.Context
+import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Base64
 import android.util.Log
 import app.bicast.finma.db.models.BalanceRowItem
 import app.bicast.finma.db.models.BankBrs
@@ -14,7 +16,10 @@ import app.bicast.finma.db.models.ExpenseGroup
 import app.bicast.finma.db.models.HomeSummaryModel
 import app.bicast.finma.db.models.User
 import app.bicast.finma.db.models.WorkEvent
+import org.json.JSONArray
+import org.json.JSONObject
 import java.util.Calendar
+
 
 class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,5) {
     override fun onCreate(db: SQLiteDatabase?) {
@@ -589,6 +594,186 @@ class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,5) {
             Log.d("EXE", e.toString())
         }
         return result
+    }
+
+    fun getMetadata() :JSONObject{
+        val db = this.readableDatabase
+        val c = db.rawQuery("SELECT name FROM sqlite_master WHERE type='table'", null)
+        val tables = ArrayList<String>()
+        val jbMetadata = JSONObject()
+        val jaTables = JSONArray()
+        if (c.moveToFirst()) {
+            while (!c.isAfterLast) {
+                if(!c.getString(0).equals("android_metadata") && !c.getString(0).equals("sqlite_sequence"))
+                    tables.add(c.getString(0))
+                c.moveToNext()
+            }
+        }
+        c.close()
+
+        if(tables.size == 0) {
+            Log.d("Tables", "No tables")
+            return jbMetadata
+        }
+        val columns = ArrayList<List<String>>()
+        for(tableName :String in tables){
+            val qry = "select * from $tableName"
+            val crsColumns = db.rawQuery(qry,null)
+            val columnsTable = ArrayList<String>()
+            columnsTable.addAll(crsColumns.columnNames)
+            columns.add(columnsTable)
+            val jaTable = JSONArray()
+            if (crsColumns.moveToFirst()) {
+                do {
+                    val jbRow = JSONObject()
+                    for(i in 0 until crsColumns.columnCount){
+                        val columnType = crsColumns.getType(i)
+                        when(columnType){
+                            Cursor.FIELD_TYPE_FLOAT -> jbRow.put(crsColumns.getColumnName(i),crsColumns.getDouble(i))
+                            Cursor.FIELD_TYPE_INTEGER -> jbRow.put(crsColumns.getColumnName(i),crsColumns.getLong(i))
+                            Cursor.FIELD_TYPE_STRING -> jbRow.put(crsColumns.getColumnName(i),crsColumns.getString(i))
+                            Cursor.FIELD_TYPE_NULL -> jbRow.put(crsColumns.getColumnName(i),null)
+                            Cursor.FIELD_TYPE_BLOB -> {
+                                val blobVal = crsColumns.getBlob(i)
+                                val stringBlob = Base64.encodeToString(blobVal, Base64.NO_WRAP)
+                                jbRow.put(crsColumns.getColumnName(i),stringBlob)
+                            }
+
+//                        byte[] bytes = getByteArr();
+//                        String base64String = Base64.encodeBase64String(bytes);
+//                        byte[] backToBytes = Base64.decodeBase64(base64String);
+
+                        }
+                    }
+                    jaTable.put(jbRow)
+                } while (crsColumns.moveToNext())
+            }
+            crsColumns.close()
+            val jbTable = JSONObject()
+            jbTable.put("table_name",tableName)
+            jbTable.put("rows",jaTable)
+            jaTables.put(jbTable)
+        }
+        //TODO for foreign key priority
+        //SELECT * FROM pragma_foreign_key_list('expenses');
+        val foreignTables = ArrayList<String>()
+        for(tableName in tables){
+            val qry = "SELECT * FROM pragma_foreign_key_list('$tableName')"
+            val crsForeign = db.rawQuery(qry,null)
+            if (crsForeign.moveToFirst()) {
+                do {
+                    foreignTables.add(crsForeign.getString(2))
+                } while (crsForeign.moveToNext())
+            }
+            crsForeign.close()
+        }
+        Log.d("Tables",tables.toString())
+        Log.d("Columns",columns.toString())
+        Log.d("JSON",jaTables.toString())
+        Log.d("FOREIGN",foreignTables.toString())
+        jbMetadata.put("tables",jaTables)
+        jbMetadata.put("priority",JSONArray(foreignTables))
+        jbMetadata.put("version",1)
+        Log.d("JBWhole",jbMetadata.toString())
+        return jbMetadata
+    }
+
+    fun putMetadata(metadata :JSONObject) {
+        val db = this.writableDatabase
+        db.beginTransaction()
+        try {
+            val tableData = metadata.getJSONArray("tables")
+            val priorityTableData = metadata.getJSONArray("priority")
+            val priorityTables = ArrayList<String>()
+            for(i in 0 until priorityTableData.length())
+                priorityTables.add(priorityTableData.getString(i))
+            val tableDataCopy = JSONArray(tableData.toString())
+            for (i in 0 until tableDataCopy.length()) {
+                val jbTable = tableDataCopy.getJSONObject(i)
+                val tableName = jbTable.getString("table_name")
+                if(priorityTables.contains(tableName)){
+                    val jaRows = jbTable.getJSONArray("rows")
+                    for (j in 0 until jaRows.length()) {
+                        val jbRow = jaRows.getJSONObject(j)
+                        val columns = jbRow.keys()
+                        val cvRow = ContentValues()
+                        while (columns.hasNext()) {
+                            val columnName: String = columns.next()
+                            if(tableName.equals("balance_entry")){
+                                Log.d("Entry","balance")
+                            }
+                            val valObj: Any = jbRow.get(columnName)
+                            if (valObj is Int) {
+                                cvRow.put(columnName, jbRow.getLong(columnName))
+                            } else if (valObj is Long) {
+                                cvRow.put(columnName, jbRow.getLong(columnName))
+                            } else if (valObj is Double) {
+                                cvRow.put(columnName, jbRow.getDouble(columnName))
+                            } else if (valObj is Boolean) {
+                                cvRow.put(columnName, jbRow.getBoolean(columnName))
+                            } else if (valObj is String) {
+                                val tempString = jbRow.getString(columnName)
+                                val regPattern =
+                                    "^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?\$"
+                                val isMatch = Regex(regPattern).matches(tempString)
+                                if (isMatch && tempString.length > 1000) {
+                                    val byteBlob = Base64.decode(tempString, Base64.NO_WRAP)
+                                    cvRow.put(columnName, byteBlob)
+                                } else {
+                                    cvRow.put(columnName, jbRow.getString(columnName))
+                                }
+                            }
+                        }
+                        db.insertWithOnConflict(tableName, null, cvRow, SQLiteDatabase.CONFLICT_IGNORE)
+                    }
+                    tableData.remove(i)
+                }
+
+            }
+            for (i in 0 until tableData.length()) {
+                val jbTable = tableData.getJSONObject(i)
+                val tableName = jbTable.getString("table_name")
+                val jaRows = jbTable.getJSONArray("rows")
+                for (j in 0 until jaRows.length()) {
+                    val jbRow = jaRows.getJSONObject(j)
+                    val columns = jbRow.keys()
+                    val cvRow = ContentValues()
+                    while (columns.hasNext()) {
+                        val columnName: String = columns.next()
+                        if(tableName.equals("balance_entry")){
+                            Log.d("Entry","balance")
+                        }
+                        val valObj: Any = jbRow.get(columnName)
+                        if (valObj is Int) {
+                            cvRow.put(columnName, jbRow.getLong(columnName))
+                        } else if (valObj is Long) {
+                            cvRow.put(columnName, jbRow.getLong(columnName))
+                        } else if (valObj is Double) {
+                            cvRow.put(columnName, jbRow.getDouble(columnName))
+                        } else if (valObj is Boolean) {
+                            cvRow.put(columnName, jbRow.getBoolean(columnName))
+                        } else if (valObj is String) {
+                            val tempString = jbRow.getString(columnName)
+                            val regPattern =
+                                "^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?\$"
+                            val isMatch = Regex(regPattern).matches(tempString)
+                            if (isMatch && tempString.length > 1000) {
+                                val byteBlob = Base64.decode(tempString, Base64.NO_WRAP)
+                                cvRow.put(columnName, byteBlob)
+                            } else {
+                                cvRow.put(columnName, jbRow.getString(columnName))
+                            }
+                        }
+                    }
+                    db.insertWithOnConflict(tableName, null, cvRow, SQLiteDatabase.CONFLICT_IGNORE)
+                }
+            }
+            db.setTransactionSuccessful()
+        }catch (e :Exception){
+            Log.d("Exc",e.toString())
+        }finally {
+            db.endTransaction()
+        }
     }
 
 }

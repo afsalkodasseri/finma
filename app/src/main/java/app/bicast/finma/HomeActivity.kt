@@ -3,31 +3,40 @@ package app.bicast.finma
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.os.Bundle
+import android.os.Environment
+import android.util.Log
+import android.view.MenuInflater
 import android.view.View
 import android.widget.ImageView
+import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
-import app.bicast.finma.R
+import androidx.core.content.FileProvider
 import app.bicast.finma.db.dbSql
-import app.bicast.finma.db.models.HomeSummaryModel
 import app.bicast.finma.db.models.WorkEvent
 import app.bicast.finma.utils.DateUtils
+import app.bicast.finma.utils.OnSwipeTouchListener
 import app.futured.donut.DonutProgressView
 import app.futured.donut.DonutSection
+import org.json.JSONObject
+import java.io.File
+import java.io.FileInputStream
+import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
+import java.util.Locale
 
 
 class HomeActivity : AppCompatActivity() {
     val requiredPermission = Manifest.permission.READ_CONTACTS
     lateinit var ivWarning :ImageView
+    lateinit var ivBackup :ImageView
     val db = dbSql(this)
+    lateinit var tvSummaryMonth :TextView
     lateinit var tvSummaryDebt :TextView
     lateinit var tvSummaryPeople :TextView
     lateinit var tvSummaryExpense :TextView
@@ -40,6 +49,8 @@ class HomeActivity : AppCompatActivity() {
     lateinit var donutProgressbar :DonutProgressView
     lateinit var tvHolidayLeft :TextView
     lateinit var tvMinBalance :TextView
+    val summaryDate = Calendar.getInstance()
+    val sdfMonth = SimpleDateFormat("MMMM", Locale.ENGLISH)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
@@ -51,7 +62,9 @@ class HomeActivity : AppCompatActivity() {
         val cardWork = findViewById<CardView>(R.id.card_work)
         val cardMinBal = findViewById<CardView>(R.id.card_minimum_balances)
         ivWarning = findViewById(R.id.iv_warning)
+        ivBackup = findViewById(R.id.iv_backup)
 
+        tvSummaryMonth = findViewById(R.id.tv_month)
         tvSummaryDebt = findViewById(R.id.tv_debts_summary)
         tvSummaryPeople = findViewById(R.id.tv_individual_summary)
         tvSummaryExpense = findViewById(R.id.tv_expense_summary)
@@ -100,6 +113,84 @@ class HomeActivity : AppCompatActivity() {
         cardMinBal.setOnClickListener{
             startActivity(Intent(this, MinBalActivity::class.java))
         }
+
+        tvSummaryMonth.setOnTouchListener(
+            object :OnSwipeTouchListener(this@HomeActivity){
+                override fun onSwipeLeft(){
+                    Log.d("Swipe","left")
+                    summaryDate.add(Calendar.MONTH,1)
+                    loadSummary()
+                }
+                override fun onSwipeRight(){
+                    Log.d("Swipe","right")
+                    summaryDate.add(Calendar.MONTH,-1)
+                    loadSummary()
+                }
+            }
+        )
+
+        ivBackup.setOnClickListener {
+            view->showPopup(view)
+        }
+    }
+
+    fun showPopup(v : View){
+        val popup = PopupMenu(this, v)
+        val inflater: MenuInflater = popup.menuInflater
+        inflater.inflate(R.menu.backup_menu, popup.menu)
+        popup.setOnMenuItemClickListener { menuItem ->
+            when(menuItem.itemId){
+                R.id.backup-> {
+                    backup()
+                }
+                R.id.restore-> {
+                    restore()
+                }
+            }
+            true
+        }
+        popup.show()
+    }
+
+    fun backup() {
+        val jaTables = db.getMetadata()
+        val path = getFilesDir()
+        val letDirectory = File(path, "Backup")
+        letDirectory.mkdirs()
+        val file = File(letDirectory, "Records.txt")
+        file.writeText(jaTables.toString())
+        saveBackup(file)
+    }
+
+    fun restore(){
+        val path = getExternalFilesDir(null)
+        val letDirectory = File(path, "restore")
+        letDirectory.mkdirs()
+        val file = File(letDirectory, "Records.txt")
+        val inputAsString = FileInputStream(file).bufferedReader().use { it.readText() }
+        val jbData = JSONObject(inputAsString)
+        val dataVersion = jbData.getInt("version")
+        db.putMetadata(jbData)
+        loadSummary()
+    }
+
+    fun saveBackup(file :File){
+        val cachePath = File(getCacheDir(), "backups")
+        val newFile = File(cachePath,  "Records.txt")
+        if(newFile.exists())
+            newFile.delete()
+        file.copyTo(newFile)
+        val contentUri =
+            FileProvider.getUriForFile(this, packageName+".fileprovider", newFile)
+
+        if (contentUri != null) {
+            val shareIntent = Intent()
+            shareIntent.action = Intent.ACTION_SEND
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) // temp permission for receiving app to read this file
+            shareIntent.setDataAndType(contentUri, contentResolver.getType(contentUri))
+            shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri)
+            startActivity(Intent.createChooser(shareIntent, "Choose an app"))
+        }
     }
 
     fun checkPermission() :Boolean{
@@ -126,7 +217,7 @@ class HomeActivity : AppCompatActivity() {
     }
 
     fun loadSummary(){
-        val summary = db.getHomeSummary(DateUtils.monthStartTime(),DateUtils.monthEndTime())
+        val summary = db.getHomeSummary(DateUtils.monthStartTime(summaryDate.time),DateUtils.monthEndTime(summaryDate.time))
         tvSummaryDebt.setText(summary.debtCount.toString() +" "+ if (summary.debtType == "PAID") "Debt" else "Credit")
         tvSummaryExpense.setText(summary.expenseCount.toString() + " expenses")
         tvSummaryPeople.setText(summary.peopleCount.toString() + " people")
@@ -162,10 +253,12 @@ class HomeActivity : AppCompatActivity() {
         val holidaysLeft = db.getWorkEvent(Date().time,DateUtils.yearEndTime(), WorkEvent.Typ.HOLIDAY.toString())
         tvHolidayLeft.setText(holidaysLeft.size.toString()+" holidays")
 
-        val totalSum: Int = db.getBalanceForMonth(DateUtils.monthStartTime(), DateUtils.monthEndTime())
+        val totalSum: Int = db.getBalanceForMonth(DateUtils.monthStartTime(summaryDate.time), DateUtils.monthEndTime(summaryDate.time))
         val tempCal = Calendar.getInstance()
         val totalDay = tempCal.getActualMaximum(Calendar.DAY_OF_MONTH)
         val averageBalance = totalSum / totalDay
         tvMinBalance.setText("$averageBalance")
+
+        tvSummaryMonth.setText(sdfMonth.format(summaryDate.time))
     }
 }

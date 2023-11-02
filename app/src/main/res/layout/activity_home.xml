@@ -189,12 +189,23 @@
                             android:id="@+id/linearLayout5"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginVertical="30dp"
+                            android:layout_marginVertical="10dp"
                             android:gravity="center"
                             android:orientation="vertical"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent">
+
+                            <TextView
+                                android:id="@+id/tv_month"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:paddingHorizontal="10dp"
+                                android:paddingTop="10dp"
+                                android:textSize="16sp"
+                                android:fontFamily="@font/montserrat_semibold"
+                                android:text="September"
+                                android:textColor="@color/blue" />
 
                             <TextView
                                 android:id="@+id/tv_total_cash"

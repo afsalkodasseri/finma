@@ -14,7 +14,15 @@
       },
       "oauth_client": [
         {
-          "client_id": "745190648347-ij5pl2upkfefgnokhcgs6s9v3i13etkn.apps.googleusercontent.com",
+          "client_id": "745190648347-6sufmv4u6mupgo12essl90t2k3acje99.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.bicast.finma",
+            "certificate_hash": "3b6409959e66dbef0cbcded578a21b205a388e40"
+          }
+        },
+        {
+          "client_id": "745190648347-iu9ug2097i040l5v39lrii0bbe58oh2d.apps.googleusercontent.com",
           "client_type": 3
         }
       ],

@@ -38,6 +38,7 @@ class HomeActivity : AppCompatActivity() {
     val requiredPermission = Manifest.permission.READ_CONTACTS
     lateinit var ivWarning :ImageView
     lateinit var ivBackup :ImageView
+    lateinit var ivSettings :ImageView
     val db = dbSql(this)
     lateinit var tvSummaryMonth :TextView
     lateinit var tvSummaryDebt :TextView
@@ -66,6 +67,7 @@ class HomeActivity : AppCompatActivity() {
         val cardMinBal = findViewById<CardView>(R.id.card_minimum_balances)
         ivWarning = findViewById(R.id.iv_warning)
         ivBackup = findViewById(R.id.iv_backup)
+        ivSettings = findViewById(R.id.iv_settings)
 
         tvSummaryMonth = findViewById(R.id.tv_month)
         tvSummaryDebt = findViewById(R.id.tv_debts_summary)
@@ -133,7 +135,11 @@ class HomeActivity : AppCompatActivity() {
         )
 
         ivBackup.setOnClickListener {
-            view->showPopup(view)
+//            view->showPopup(view)
+        }
+
+        ivSettings.setOnClickListener {
+            startActivity(Intent(this,SettingsActivity::class.java))
         }
     }
 

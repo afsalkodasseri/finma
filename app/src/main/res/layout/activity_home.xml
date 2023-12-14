@@ -35,6 +35,16 @@
             app:srcCompat="@drawable/ic_warning" />
 
         <ImageView
+            android:id="@+id/iv_settings"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:padding="10dp"
+            android:visibility="visible"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/ic_settings" />
+
+        <ImageView
             android:id="@+id/iv_backup"
             android:layout_width="50dp"
             android:layout_height="50dp"

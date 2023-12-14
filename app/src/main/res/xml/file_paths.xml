@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
     <cache-path name="shared_cache" path="backups/"/>
+    <cache-path name="shared_restore_cache" path="restores/"/>
+    <cache-path name="shared_restore_cache_file" path="Restore/"/>
 </paths>

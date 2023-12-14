@@ -55,6 +55,7 @@ class SettingsActivity : AppCompatActivity() {
                 if(googleSignInResult!!.isSuccess) {
                     Log.d(TAG, "Successfully signed in")
                     mGoogleAccount = googleSignInResult.signInAccount
+                    tvAccount.setText(mGoogleAccount!!.email.toString())
                     checkGDrivePermission()
                 }else
                     Log.d(TAG,"Sign in failed")
@@ -104,6 +105,7 @@ class SettingsActivity : AppCompatActivity() {
         var googleEmail = "Not signed in"
         if(mGoogleAccount!=null){
             googleEmail = mGoogleAccount!!.email.toString()
+            initGDriveIfPermission()
         }
         tvAccount.setText(googleEmail)
 
@@ -145,6 +147,7 @@ class SettingsActivity : AppCompatActivity() {
     }
     fun restoreGDrive(){
         val cachePath = File(getCacheDir(), "restores")
+        cachePath.mkdirs()
         val restoreFile = File(cachePath,  "Records.txt")
         val contentUri = FileProvider.getUriForFile(this, packageName+".fileprovider", restoreFile)
         helperDrive!!.getDBFile(restoreFile).addOnSuccessListener {
@@ -228,6 +231,13 @@ class SettingsActivity : AppCompatActivity() {
             if(mGoogleDrive==null)
                 initDrive()
             return true
+        }
+    }
+
+    fun initGDriveIfPermission() {
+        if(GoogleSignIn.hasPermissions(mGoogleAccount, Scope(Scopes.DRIVE_FILE), Scope(Scopes.EMAIL))){
+            if(mGoogleDrive==null)
+                initDrive()
         }
     }
 

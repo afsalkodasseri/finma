@@ -57,6 +57,7 @@ class GDriveHelper(var mDrive: Drive) {
                     Log.d(TAG,"backup files found")
                     val outStream = FileOutputStream(downloadFile)
                     mDrive.files().get(file.id).executeMediaAndDownloadTo(outStream)
+                    Log.d(TAG,"backup files downloaded")
                 }else{
                     Log.d(TAG,"no backup files found")
                 }

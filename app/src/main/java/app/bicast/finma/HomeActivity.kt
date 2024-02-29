@@ -53,6 +53,7 @@ class HomeActivity : AppCompatActivity() {
     lateinit var donutProgressbar :DonutProgressView
     lateinit var tvHolidayLeft :TextView
     lateinit var tvMinBalance :TextView
+    lateinit var tvDaySummary :TextView
     val summaryDate = Calendar.getInstance()
     val sdfMonth = SimpleDateFormat("MMMM", Locale.ENGLISH)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,6 +66,7 @@ class HomeActivity : AppCompatActivity() {
         val cardExpenses = findViewById<CardView>(R.id.card_expense)
         val cardWork = findViewById<CardView>(R.id.card_work)
         val cardMinBal = findViewById<CardView>(R.id.card_minimum_balances)
+        val cardSummary = findViewById<CardView>(R.id.card_summary)
         ivWarning = findViewById(R.id.iv_warning)
         ivBackup = findViewById(R.id.iv_backup)
         ivSettings = findViewById(R.id.iv_settings)
@@ -82,6 +84,7 @@ class HomeActivity : AppCompatActivity() {
         donutProgressbar = findViewById(R.id.donut_view)
         tvHolidayLeft = findViewById(R.id.tv_work_summary)
         tvMinBalance = findViewById(R.id.tv_min_bal_summary)
+        tvDaySummary = findViewById(R.id.tv_day_summary)
 
         if (checkPermission())
             ivWarning.visibility = View.GONE
@@ -117,6 +120,10 @@ class HomeActivity : AppCompatActivity() {
 
         cardMinBal.setOnClickListener{
             startActivity(Intent(this, MinBalActivity::class.java))
+        }
+
+        cardSummary.setOnClickListener{
+            startActivity(Intent(this, DaySummaryActivity::class.java))
         }
 
         tvSummaryMonth.setOnTouchListener(

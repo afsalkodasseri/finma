@@ -9,6 +9,7 @@ import android.util.Base64
 import android.util.Log
 import app.bicast.finma.db.models.BalanceRowItem
 import app.bicast.finma.db.models.BankBrs
+import app.bicast.finma.db.models.DaySummaryItem
 import app.bicast.finma.db.models.Entry
 import app.bicast.finma.db.models.EntryRowItem
 import app.bicast.finma.db.models.Expense
@@ -775,5 +776,25 @@ class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,5) {
             db.endTransaction()
         }
     }
+
+    //for day summary
+    fun getExpenseMonthDayGrouped(type :Int = 0,startTime: Long,endTime: Long) :ArrayList<DaySummaryItem>{
+        val db = readableDatabase
+        var typeQuery = ""
+        when(type){
+            1->typeQuery = " and expenses.type = 'EXPENSE'"
+            2->typeQuery = " and expenses.type = 'INCOME'"
+        }
+
+        val crs = db.rawQuery("select date(expense_date/1000,'unixepoch','localtime') as date,expense_date,sum(expenses.amount) as dayAmount,count(expenses.id) as count from expenses where expense_date between $startTime and $endTime $typeQuery GROUP by date order by date asc, id desc",null)
+        val result :ArrayList<DaySummaryItem> = ArrayList()
+        if(crs.moveToFirst()){
+            do {
+                result.add(DaySummaryItem(crs.getLong(1),crs.getInt(2),crs.getInt(3)))
+            }while (crs.moveToNext())
+        }
+        return result
+    }
+
 
 }

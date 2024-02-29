@@ -18,6 +18,9 @@
         android:theme="@style/Theme.MyKotPure"
         tools:targetApi="31">
         <activity
+            android:name=".DaySummaryActivity"
+            android:exported="false" />
+        <activity
             android:name=".SettingsActivity"
             android:exported="false" />
         <activity
@@ -65,11 +68,12 @@
         <activity
             android:name=".HomeActivity"
             android:exported="true">
-             <intent-filter>
-             <action android:name="android.intent.action.MAIN" />
-             <category android:name="android.intent.category.LAUNCHER" />
-             </intent-filter>
-<!--             Shortcuts -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- Shortcuts -->
             <meta-data
                 android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
@@ -77,10 +81,11 @@
         <activity
             android:name=".MainActivity"
             android:exported="true">
-<!--            <intent-filter>-->
-<!--                <action android:name="android.intent.action.MAIN" />-->
-<!--                <category android:name="android.intent.category.LAUNCHER" />-->
-<!--            </intent-filter>-->
+
+            <!-- <intent-filter> -->
+            <!-- <action android:name="android.intent.action.MAIN" /> -->
+            <!-- <category android:name="android.intent.category.LAUNCHER" /> -->
+            <!-- </intent-filter> -->
         </activity>
 
         <provider

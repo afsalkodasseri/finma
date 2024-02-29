@@ -10,8 +10,6 @@ import androidx.recyclerview.widget.RecyclerView
 import app.bicast.finma.adapter.BrsRecyAdapter
 import app.bicast.finma.db.dbSql
 import app.bicast.finma.db.models.BankBrs
-import app.bicast.finma.R
-import app.bicast.finma.utils.DateUtils
 import app.bicast.finma.utils.RangePicker.PickerDialog
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import java.text.SimpleDateFormat
@@ -86,19 +84,25 @@ class BankBRSActivity : AppCompatActivity() {
         tvMonth.setOnClickListener {
             val startDate = Date(startTime)
             val endDate = Date(endTime)
-            val dialog = PickerDialog(this, startDate, endDate)
+            val dialog = PickerDialog(
+                this,
+                startDate,
+                endDate
+            )
             dialog.showPicker()
-            dialog.setOnRangeSelection { StartDate, EndDate ->
-                val timeMonth = Calendar.getInstance()
-                timeMonth.time = StartDate
-                timeMonth.set(Calendar.HOUR_OF_DAY,0)
-                timeMonth.set(Calendar.MINUTE,0)
-                timeMonth.set(Calendar.SECOND,0)
-                timeMonth.set(Calendar.MILLISECOND,0)
-                startTime = timeMonth.timeInMillis
-                endTime = EndDate.time
-                loadEntries()
-            }
+            dialog.setOnRangeSelection(rangeSelector = object : PickerDialog.OnRangeSelect {
+                override fun onSelect(start: Date, end: Date) {
+                    val timeMonth = Calendar.getInstance()
+                    timeMonth.time = start
+                    timeMonth.set(Calendar.HOUR_OF_DAY, 0)
+                    timeMonth.set(Calendar.MINUTE, 0)
+                    timeMonth.set(Calendar.SECOND, 0)
+                    timeMonth.set(Calendar.MILLISECOND, 0)
+                    startTime = timeMonth.timeInMillis
+                    endTime = end.time
+                    loadEntries()
+                }
+            })
         }
 
         loadMonthTimes()

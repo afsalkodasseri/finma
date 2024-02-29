@@ -4,23 +4,19 @@ import android.app.Dialog
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
-import android.util.Log
 import android.view.Gravity
-import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.RadioButton
-import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.RecyclerView.Orientation
 import app.bicast.finma.adapter.ColorsRecyAdapter
 import app.bicast.finma.adapter.ExpenseGroupsRecyAdapter
 import app.bicast.finma.adapter.ExpensesRecyAdapter
@@ -94,19 +90,26 @@ class ExpenseGroupsActivity : AppCompatActivity() {
         tvMonth.setOnClickListener {
             val startDate = Date(startTime)
             val endDate = Date(endTime)
-            val dialog = PickerDialog(this, startDate, endDate)
+            val dialog = PickerDialog(
+                this,
+                startDate,
+                endDate
+            )
             dialog.showPicker()
-            dialog.setOnRangeSelection { StartDate, EndDate ->
-                val timeMonth = Calendar.getInstance()
-                timeMonth.time = StartDate
-                timeMonth.set(Calendar.HOUR_OF_DAY,0)
-                timeMonth.set(Calendar.MINUTE,0)
-                timeMonth.set(Calendar.SECOND,0)
-                timeMonth.set(Calendar.MILLISECOND,0)
-                startTime = timeMonth.timeInMillis
-                endTime = EndDate.time
-                loadEntries()
-            }
+            dialog.setOnRangeSelection(rangeSelector = object : PickerDialog.OnRangeSelect{
+                override fun onSelect(start: Date, end: Date) {
+                    val timeMonth = Calendar.getInstance()
+                    timeMonth.time = start
+                    timeMonth.set(Calendar.HOUR_OF_DAY,0)
+                    timeMonth.set(Calendar.MINUTE,0)
+                    timeMonth.set(Calendar.SECOND,0)
+                    timeMonth.set(Calendar.MILLISECOND,0)
+                    startTime = timeMonth.timeInMillis
+                    endTime = end.time
+                    loadEntries()
+                }
+
+            })
         }
 
         tvSortBy.setOnClickListener {

@@ -78,4 +78,7 @@ dependencies {
         exclude group: 'org.apache.httpcomponents'
     }
     implementation 'com.google.guava:guava:27.0.1-android'
+
+    //for chart library
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
 }

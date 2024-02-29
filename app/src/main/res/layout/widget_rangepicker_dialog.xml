@@ -154,7 +154,7 @@
             </LinearLayout>
         </LinearLayout>
 
-        <app.bicast.finma.utils.RangePicker.DatePickerView
+        <app.bicast.finma.utils.RangePicker.DatePickerViewJava
             android:id="@+id/dateRangerView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import app.bicast.finma.adapter.ExpensesRecyAdapter
 import app.bicast.finma.db.dbSql
+import app.bicast.finma.db.models.DaySummaryBalanceModel
 import app.bicast.finma.db.models.DaySummaryItem
 import app.bicast.finma.db.models.Expense
 import app.bicast.finma.utils.DateUtils
@@ -34,6 +35,8 @@ class DaySummaryActivity : AppCompatActivity() {
     lateinit var chartCombined :CombinedChart
     lateinit var etReserve: EditText
     lateinit var tvAverage: TextView
+    lateinit var tvBalance: TextView
+    lateinit var tvExcess: TextView
     lateinit var tvNeed: TextView
     lateinit var tvMonth: TextView
     lateinit var ivBackMonth: ImageView
@@ -48,9 +51,11 @@ class DaySummaryActivity : AppCompatActivity() {
     var startTime:Long = 0
     var endTime:Long = 0
     var totalAmount = 0
+    var expenseTotal = 0
     var reserveAmount = 0
     var dayAmount = 0
     var dayMaxCount = 0
+    var summaryModel = DaySummaryBalanceModel()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_day_summary)
@@ -58,6 +63,8 @@ class DaySummaryActivity : AppCompatActivity() {
         chartCombined = findViewById(R.id.chart_summary)
         etReserve = findViewById(R.id.et_reserve)
         tvAverage = findViewById(R.id.tv_average)
+        tvBalance = findViewById(R.id.tv_balance)
+        tvExcess = findViewById(R.id.tv_excess)
         tvNeed = findViewById(R.id.tv_need)
         tvMonth = findViewById(R.id.tv_month)
         ivBackMonth = findViewById(R.id.iv_prev_month)
@@ -89,9 +96,6 @@ class DaySummaryActivity : AppCompatActivity() {
     fun loadData(){
         val timeMonth = Calendar.getInstance()
         timeMonth.time = calendarMonth.time
-        //todo test prev month
-        timeMonth.add(Calendar.MONTH,-1)
-
         timeMonth.set(Calendar.DAY_OF_MONTH,1)
         timeMonth.set(Calendar.HOUR_OF_DAY,0)
         timeMonth.set(Calendar.MINUTE,0)
@@ -105,10 +109,12 @@ class DaySummaryActivity : AppCompatActivity() {
         dayMaxCount = timeMonth.getActualMaximum(Calendar.DAY_OF_MONTH)
 
         val summaryList = db.getExpenseMonthDayGrouped(startTime, endTime)
+        summaryModel = db.getMonthAmountDaySummary(startTime, endTime)
+        totalAmount = summaryModel.balance
+        expenseTotal = summaryList.sumOf { it.amount?:0 }
         fillSummaryDays(summaryList,startTime, endTime)
         setBardata(summaryList)
         onDaySelected(0)
-        totalAmount = summaryList.sumOf { it.amount }
         setSummaryAmounts()
         tvMonth.setText(sdf.format(timeMonth.time))
     }
@@ -116,7 +122,19 @@ class DaySummaryActivity : AppCompatActivity() {
     fun setSummaryAmounts(){
         val actualAmount = totalAmount - reserveAmount
         tvNeed.setText(actualAmount.toString())
-        tvAverage.setText((actualAmount/dayMaxCount).toString())
+        dayAmount = actualAmount/dayMaxCount
+        tvAverage.setText(dayAmount.toString())
+        val dayValue = calendarMonth.get(Calendar.DAY_OF_MONTH)
+        val currentBalance = dayAmount * dayValue
+        tvBalance.text = currentBalance.toString()
+        val difference = currentBalance - expenseTotal
+        if(difference>0) {
+            tvExcess.setTextColor(getColor(R.color.green))
+            tvExcess.text = "+"+difference.toString()
+        }else{
+            tvExcess.setTextColor(getColor(R.color.red))
+            tvExcess.text = difference.toString()
+        }
     }
 
     fun setBardata(listExpenses :List<DaySummaryItem>){

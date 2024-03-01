@@ -9,6 +9,7 @@ import android.util.Base64
 import android.util.Log
 import app.bicast.finma.db.models.BalanceRowItem
 import app.bicast.finma.db.models.BankBrs
+import app.bicast.finma.db.models.DaySummaryBalanceModel
 import app.bicast.finma.db.models.DaySummaryItem
 import app.bicast.finma.db.models.Entry
 import app.bicast.finma.db.models.EntryRowItem
@@ -810,5 +811,16 @@ class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,5) {
         return result
     }
 
+    fun getMonthAmountDaySummary(startTime: Long, endTime: Long) : DaySummaryBalanceModel {
+        val db = readableDatabase
+        val result = DaySummaryBalanceModel()
+        val crCashTotal = db.rawQuery("SELECT sum(case when amount>0 then amount end) as balance,sum(case when amount<0 then -amount end) as expense,sum(amount) as difference from bank where monthly_type == '1' and entry_date BETWEEN $startTime and $endTime group by type order by balance desc",null)
+        if(crCashTotal.moveToFirst()){
+            result.income = crCashTotal.getInt(0)
+            result.expense = crCashTotal.getInt(1)
+            result.balance = crCashTotal.getInt(2)
+        }
+        return result
+    }
 
 }

@@ -778,19 +778,33 @@ class dbSql(context : Context) : SQLiteOpenHelper(context,"main_db",null,5) {
     }
 
     //for day summary
-    fun getExpenseMonthDayGrouped(type :Int = 0,startTime: Long,endTime: Long) :ArrayList<DaySummaryItem>{
+    fun getExpenseMonthDayGrouped(startTime: Long,endTime: Long) :ArrayList<DaySummaryItem>{
         val db = readableDatabase
-        var typeQuery = ""
-        when(type){
-            1->typeQuery = " and expenses.type = 'EXPENSE'"
-            2->typeQuery = " and expenses.type = 'INCOME'"
-        }
-
-        val crs = db.rawQuery("select date(expense_date/1000,'unixepoch','localtime') as date,expense_date,sum(expenses.amount) as dayAmount,count(expenses.id) as count from expenses where expense_date between $startTime and $endTime $typeQuery GROUP by date order by date asc, id desc",null)
+        val crs = db.rawQuery("select date(expense_date/1000,'unixepoch','localtime') as date,expense_date,sum(expenses.amount) as dayAmount,count(expenses.id) as count from expenses join bank on expenses.brs=bank.id where expense_date between $startTime and $endTime and expenses.type = 'EXPENSE' and (bank.monthly_type is null or bank.monthly_type != 1) GROUP by date order by date asc, expenses.id desc",null)
         val result :ArrayList<DaySummaryItem> = ArrayList()
         if(crs.moveToFirst()){
             do {
                 result.add(DaySummaryItem(crs.getLong(1),crs.getInt(2),crs.getInt(3)))
+            }while (crs.moveToNext())
+        }
+        return result
+    }
+    fun getSummaryExpense(startTime: Long,endTime: Long) :ArrayList<Expense>{
+        val db = readableDatabase
+        val crs = db.rawQuery("select expenses.*,date(expense_date/1000,'unixepoch','localtime') as date,bank.* from expenses join bank on expenses.brs=bank.id where expense_date between $startTime and $endTime and expenses.type = 'EXPENSE' and (bank.monthly_type is null or bank.monthly_type != 1) order by date asc, expenses.id desc",null)
+        val result :ArrayList<Expense> = ArrayList()
+        if(crs.moveToFirst()){
+            do {
+                val brs : BankBrs?
+                if(crs.getString(9)==null){
+                    brs = null
+                }else{
+                    brs = BankBrs(crs.getInt(9),crs.getString(10),crs.getInt(11),crs.getString(13),crs.getLong(12),crs.getInt(14))
+                }
+                result.add(
+                    Expense(crs.getInt(0),crs.getString(1),crs.getInt(2),crs.getString(3),crs.getString(5),crs.getLong(4),
+                        brs,crs.getString(7))
+                )
             }while (crs.moveToNext())
         }
         return result

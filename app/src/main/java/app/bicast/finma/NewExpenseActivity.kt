@@ -44,8 +44,10 @@ class NewExpenseActivity : AppCompatActivity() {
     lateinit var tvBrsType : TextView
     lateinit var spGroups : Spinner
     lateinit var btAdd : Button
+    lateinit var checkMonthly : CheckBox
     var expense: Expense? = null
     var multiMode = false
+    var monthlyItem = false
     var BrsType = BankBrs.Typ.BANK
     var expenseGroup :String? = null
 
@@ -62,6 +64,7 @@ class NewExpenseActivity : AppCompatActivity() {
         brsType = findViewById(R.id.ll_brs_type)
         tvBrsType = findViewById(R.id.tv_brs_type)
         spGroups = findViewById(R.id.sp_groups)
+        checkMonthly = findViewById(R.id.check_monthly)
 
         findViewById<ImageView>(R.id.iv_toolbar_back).setOnClickListener {
             onBackPressed()
@@ -95,6 +98,9 @@ class NewExpenseActivity : AppCompatActivity() {
 
         findViewById<CheckBox>(R.id.check_mutli).setOnCheckedChangeListener { buttonView, isChecked ->
             multiMode = isChecked
+        }
+        checkMonthly.setOnCheckedChangeListener { buttonView, isChecked ->
+            monthlyItem = isChecked
         }
 
         calTime.set(Calendar.HOUR_OF_DAY,0)
@@ -139,7 +145,8 @@ class NewExpenseActivity : AppCompatActivity() {
                             expenseType.toString(),
                             calTime.timeInMillis,
                             brsType,
-                            expenseGroup
+                            expenseGroup,
+                            if (monthlyItem) 1 else 0
                         )
                     )
 
@@ -153,11 +160,12 @@ class NewExpenseActivity : AppCompatActivity() {
                 expense!!.name = name
                 expense!!.type = expenseType.toString()
                 expense!!.dateTime = calTime.timeInMillis
-                val tempBrs = expense!!.brs ?: BankBrs(null,"From $expenseType Expense",if(expenseType== ExpenseType.INCOME)amount.toInt() else -1*amount.toInt(),brsType.toString(),calTime.timeInMillis,0)
+                val tempBrs = expense!!.brs ?: BankBrs(null,"From $expenseType Expense",if(expenseType== ExpenseType.INCOME)amount.toInt() else -1*amount.toInt(),brsType.toString(),calTime.timeInMillis,if (monthlyItem) 1 else 0)
                 tempBrs.type = brsType.toString()
                 tempBrs.name = "From $expenseType Expense"
                 tempBrs.amount = if(expenseType== ExpenseType.INCOME)amount.toInt() else -1*amount.toInt()
                 tempBrs.dateTime = calTime.timeInMillis
+                tempBrs.monthlyIncome = if (monthlyItem) 1 else 0
                 expense!!.brs = tempBrs
                 expense!!.group_id = expenseGroup
                 db.upsertExpense(expense!!)
@@ -225,6 +233,7 @@ class NewExpenseActivity : AppCompatActivity() {
             expense!!.brs?:let{
                 brsType.visibility = View.GONE
             }
+            checkMonthly.isChecked = expense!!.brs!!.monthlyIncome==1
             expenseGroup = expense!!.group_id
         }
 

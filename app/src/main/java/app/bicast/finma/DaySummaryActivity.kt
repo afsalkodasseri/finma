@@ -2,17 +2,28 @@ package app.bicast.finma
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.res.ResourcesCompat
+import androidx.core.widget.doAfterTextChanged
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import app.bicast.finma.adapter.ExpensesRecyAdapter
 import app.bicast.finma.db.dbSql
 import app.bicast.finma.db.models.DaySummaryItem
+import app.bicast.finma.db.models.Expense
+import app.bicast.finma.utils.DateUtils
 import com.github.mikephil.charting.charts.CombinedChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
 import com.github.mikephil.charting.data.CombinedData
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.formatter.ValueFormatter
+import com.github.mikephil.charting.highlight.Highlight
+import com.github.mikephil.charting.listener.OnChartValueSelectedListener
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -21,26 +32,39 @@ import java.util.Locale
 
 class DaySummaryActivity : AppCompatActivity() {
     lateinit var chartCombined :CombinedChart
-    lateinit var tvTotal: TextView
+    lateinit var etReserve: EditText
     lateinit var tvAverage: TextView
     lateinit var tvNeed: TextView
     lateinit var tvMonth: TextView
     lateinit var ivBackMonth: ImageView
     lateinit var ivNextMonth: ImageView
+    lateinit var tvDay: TextView
+    lateinit var tvTotal: TextView
+    lateinit var recyExpenses: RecyclerView
     val db: dbSql = dbSql(this)
     val sdf = SimpleDateFormat("MMMM yyyy", Locale.ENGLISH)
+    val sdfDm = SimpleDateFormat("dd MMM", Locale.ENGLISH)
     val calendarMonth : Calendar = Calendar.getInstance()
+    var startTime:Long = 0
+    var endTime:Long = 0
+    var totalAmount = 0
+    var reserveAmount = 0
+    var dayAmount = 0
+    var dayMaxCount = 0
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_day_summary)
 
         chartCombined = findViewById(R.id.chart_summary)
-        tvTotal = findViewById(R.id.tv_total)
+        etReserve = findViewById(R.id.et_reserve)
         tvAverage = findViewById(R.id.tv_average)
         tvNeed = findViewById(R.id.tv_need)
         tvMonth = findViewById(R.id.tv_month)
         ivBackMonth = findViewById(R.id.iv_prev_month)
         ivNextMonth = findViewById(R.id.iv_next_month)
+        tvDay = findViewById(R.id.tv_day)
+        tvTotal = findViewById(R.id.tv_total)
+        recyExpenses = findViewById(R.id.recy_entries)
         findViewById<ImageView>(R.id.iv_toolbar_back).setOnClickListener {
             onBackPressed()
         }
@@ -55,46 +79,133 @@ class DaySummaryActivity : AppCompatActivity() {
             calendarMonth.add(Calendar.MONTH,1)
             loadData()
         }
+
+        etReserve.doAfterTextChanged {
+            reserveAmount = it.toString().toIntOrNull()?:0
+            setSummaryAmounts()
+        }
     }
 
     fun loadData(){
         val timeMonth = Calendar.getInstance()
         timeMonth.time = calendarMonth.time
+        //todo test prev month
+        timeMonth.add(Calendar.MONTH,-1)
+
         timeMonth.set(Calendar.DAY_OF_MONTH,1)
         timeMonth.set(Calendar.HOUR_OF_DAY,0)
         timeMonth.set(Calendar.MINUTE,0)
         timeMonth.set(Calendar.SECOND,0)
         timeMonth.set(Calendar.MILLISECOND,0)
-        val startTime = timeMonth.timeInMillis
+        startTime = timeMonth.timeInMillis
         timeMonth.set(Calendar.DAY_OF_MONTH,timeMonth.getActualMaximum(Calendar.DAY_OF_MONTH))
         timeMonth.add(Calendar.DAY_OF_MONTH,1)
         timeMonth.add(Calendar.SECOND,-1)
-        val endTime = timeMonth.timeInMillis
+        endTime = timeMonth.timeInMillis
+        dayMaxCount = timeMonth.getActualMaximum(Calendar.DAY_OF_MONTH)
 
-        val summaryList = db.getExpenseMonthDayGrouped(0,startTime, endTime)
+        val summaryList = db.getExpenseMonthDayGrouped(startTime, endTime)
+        fillSummaryDays(summaryList,startTime, endTime)
         setBardata(summaryList)
+        onDaySelected(0)
+        totalAmount = summaryList.sumOf { it.amount }
+        setSummaryAmounts()
+        tvMonth.setText(sdf.format(timeMonth.time))
+    }
 
-        val totalAmount = summaryList.sumOf { it.amount }
-//        val highest = summaryList.maxOf { it.amount }
-
-        tvNeed.setText(totalAmount.toString())
-        tvAverage.setText(0.toString())
-        tvMonth.setText(sdf.format(calendarMonth.time))
+    fun setSummaryAmounts(){
+        val actualAmount = totalAmount - reserveAmount
+        tvNeed.setText(actualAmount.toString())
+        tvAverage.setText((actualAmount/dayMaxCount).toString())
     }
 
     fun setBardata(listExpenses :List<DaySummaryItem>){
         val amountList = listExpenses.map { it.amount }
-        val barEntries = amountList.mapIndexed { i,amount-> BarEntry(i.toFloat(),amount.toFloat()) }
+        val barEntries = amountList.mapIndexed { i,amount-> BarEntry(i+1.toFloat(),amount.toFloat()) }
         val barDataSet = BarDataSet(barEntries,"daySummary")
         barDataSet.setDrawValues(true)
+        barDataSet.valueTypeface = ResourcesCompat.getFont(this,R.font.monteser_bold)
+        barDataSet.valueTextSize = 5.5f
         barDataSet.color = getColor(R.color.blue)
+        barDataSet.highLightColor = getColor(R.color.black)
+        barDataSet.highLightAlpha = 255
+        barDataSet.valueFormatter = object : ValueFormatter(){
+            override fun getFormattedValue(value: Float): String {
+                if(value==0f)
+                    return ""
+                return value.toInt().toString()
+            }
+        }
 
         val combinedData = CombinedData()
         combinedData.setData(BarData(barDataSet))
         chartCombined.data = combinedData
         chartCombined.legend.isEnabled = false
         chartCombined.axisLeft.isEnabled = false
-        chartCombined.xAxis.position = XAxis.XAxisPosition.BOTTOM
+        chartCombined.description.isEnabled = false
+        chartCombined.setScaleEnabled(false)
+        chartCombined.setPinchZoom(false)
+        val xAxis = chartCombined.xAxis
+        xAxis.position = XAxis.XAxisPosition.BOTTOM
+        xAxis.axisMinimum = 0.5f
+        xAxis.axisMaximum = listExpenses.size + 0.5f
+        xAxis.typeface =ResourcesCompat.getFont(this,R.font.monteser_bold)
+        xAxis.axisLineColor = getColor(R.color.black)
+        xAxis.setDrawGridLines(false)
+        xAxis.axisLineWidth = 0.8f
+        val yAxis = chartCombined.axisRight
+        chartCombined.axisLeft.axisMinimum = 0f
+        yAxis.axisMinimum = 0f
+        yAxis.typeface =ResourcesCompat.getFont(this,R.font.monteser_bold)
+        yAxis.axisLineColor = getColor(R.color.black)
+        yAxis.axisLineWidth = 0.8f
+        yAxis.setDrawGridLines(false)
+        chartCombined.setOnChartValueSelectedListener(object :OnChartValueSelectedListener{
+            override fun onValueSelected(e: Entry?, h: Highlight?) {
+                onDaySelected(e!!.x.toInt())
+            }
+
+            override fun onNothingSelected() {
+                onDaySelected(0)
+            }
+
+        })
         chartCombined.invalidate()
+    }
+
+    fun onDaySelected(day :Int){
+        val expenseItems : List<Expense>
+        val txtDay :String
+        if(day>0) {
+            val tempCal = Calendar.getInstance()
+            tempCal.timeInMillis = startTime
+            tempCal.set(Calendar.DAY_OF_MONTH, day)
+            val dayStartTime = DateUtils.startTime(tempCal.timeInMillis)
+            val dayEndTime = DateUtils.endTime(tempCal.timeInMillis)
+            expenseItems = db.getSummaryExpense(dayStartTime,dayEndTime)
+            txtDay = sdfDm.format(Date(dayStartTime))
+        }else{
+            expenseItems = db.getSummaryExpense(startTime,endTime)
+            txtDay = sdfDm.format(Date(startTime)) + " - " + sdfDm.format(Date(endTime))
+        }
+        val adapterEntries = ExpensesRecyAdapter(expenseItems)
+        recyExpenses.adapter = adapterEntries
+        recyExpenses.layoutManager = LinearLayoutManager(this)
+        tvDay.setText(txtDay)
+        tvTotal.text = expenseItems.sumOf { it.amount?:0 }.toString()
+    }
+
+    fun fillSummaryDays(listSummary :ArrayList<DaySummaryItem>,startTime :Long, endTime :Long){
+        val daySeconds = 86400000
+        val lastTime = listSummary.last().date
+        val daysCountAvailable = ((lastTime - startTime)/daySeconds).toInt()
+        for(i in 0 ..  daysCountAvailable){
+            val item = listSummary.get(i)
+            val secondsDifference = item.date - startTime
+            val dayNumberActual = (secondsDifference/daySeconds).toInt()
+            val missedDays = dayNumberActual - i
+            for(j in 0 until missedDays)
+                listSummary.add(i+j,DaySummaryItem(startTime+(daySeconds*i)+(daySeconds*j),0,0))
+        }
     }
 }

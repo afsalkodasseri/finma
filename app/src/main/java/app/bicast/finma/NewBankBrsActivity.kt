@@ -61,11 +61,11 @@ class NewBankBrsActivity : AppCompatActivity() {
         }
 
         checkMonthly.setOnCheckedChangeListener { buttonView, isChecked ->
-            multiMode = isChecked
+            monthlyIncome = isChecked
         }
 
-        findViewById<CheckBox>(R.id.check_monthly).setOnCheckedChangeListener { buttonView, isChecked ->
-            monthlyIncome = isChecked
+        findViewById<CheckBox>(R.id.check_mutli).setOnCheckedChangeListener { buttonView, isChecked ->
+            multiMode = isChecked
         }
 
         calTime.set(Calendar.HOUR_OF_DAY,0)

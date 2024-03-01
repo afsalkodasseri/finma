@@ -151,16 +151,31 @@
             android:textSize="16sp"
             android:theme="@style/blueBoxPrimary" />
 
-        <CheckBox
-            android:id="@+id/check_mutli"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="30dp"
-            android:layout_marginTop="20dp"
-            android:checked="false"
-            android:textColor="@color/black"
-            android:theme="@style/checkBoxStyle"
-            android:text="Multi Mode" />
+            android:layout_marginTop="20dp">
+            <CheckBox
+                android:id="@+id/check_mutli"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:checked="false"
+                android:textColor="@color/black"
+                android:theme="@style/checkBoxStyle"
+                android:text="Multi Mode" />
+
+            <CheckBox
+                android:id="@+id/check_monthly"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:checked="false"
+                android:text="Monthly"
+                android:textColor="@color/black"
+                android:theme="@style/checkBoxStyle" />
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/ll_brs_type"

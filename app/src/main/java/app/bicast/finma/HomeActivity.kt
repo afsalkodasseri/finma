@@ -148,6 +148,9 @@ class HomeActivity : AppCompatActivity() {
         ivSettings.setOnClickListener {
             startActivity(Intent(this,SettingsActivity::class.java))
         }
+
+        //todo for direct the current development screen
+        startActivity(Intent(this, DaySummaryActivity::class.java))
     }
 
     fun showPopup(v : View){

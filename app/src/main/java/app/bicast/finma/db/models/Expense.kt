@@ -20,8 +20,8 @@ class Expense (
 {
     private val sdf = SimpleDateFormat("dd-MM-yyyy", Locale.ENGLISH)
 
-    constructor(name: String,amount: Int,description: String,type: String,dateTime: Long,brsType : BankBrs.Typ,group_id: String?):
-            this(null,name,amount, description, type, dateTime, BankBrs(null,"From $type Expense",if(type== NewExpenseActivity.ExpenseType.INCOME.toString())amount else -1*amount, brsType.toString(), dateTime,0),group_id)
+    constructor(name: String,amount: Int,description: String,type: String,dateTime: Long,brsType : BankBrs.Typ,group_id: String?, monthly :Int):
+            this(null,name,amount, description, type, dateTime, BankBrs(null,"From $type Expense",if(type== NewExpenseActivity.ExpenseType.INCOME.toString())amount else -1*amount, brsType.toString(), dateTime,monthly),group_id)
 
     constructor(parcel: Parcel) : this(
         parcel.readValue(Int::class.java.classLoader) as? Int,

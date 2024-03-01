@@ -22,6 +22,8 @@ import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
 import com.github.mikephil.charting.data.CombinedData
 import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.ValueFormatter
 import com.github.mikephil.charting.highlight.Highlight
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener
@@ -135,6 +137,20 @@ class DaySummaryActivity : AppCompatActivity() {
             tvExcess.setTextColor(getColor(R.color.red))
             tvExcess.text = difference.toString()
         }
+
+        val currentData = chartCombined.data
+        val lineEntries :ArrayList<Entry> = ArrayList()
+        lineEntries.add(Entry(1f,dayAmount.toFloat()))
+        lineEntries.add(Entry(dayMaxCount.toFloat(),dayAmount.toFloat()))
+        val lineData = LineDataSet(lineEntries,"dayBalance")
+        lineData.setColor(getColor(R.color.green))
+        lineData.lineWidth = 1f
+        lineData.setDrawCircles(false)
+        lineData.setDrawValues(false)
+        lineData.setDrawHighlightIndicators(false)
+        currentData.setData(LineData(lineData))
+        chartCombined.data = currentData
+        chartCombined.invalidate()
     }
 
     fun setBardata(listExpenses :List<DaySummaryItem>){
@@ -215,6 +231,7 @@ class DaySummaryActivity : AppCompatActivity() {
 
     fun fillSummaryDays(listSummary :ArrayList<DaySummaryItem>,startTime :Long, endTime :Long){
         val daySeconds = 86400000
+        if(listSummary.isEmpty())   return
         val lastTime = listSummary.last().date
         val daysCountAvailable = ((lastTime - startTime)/daySeconds).toInt()
         for(i in 0 ..  daysCountAvailable){

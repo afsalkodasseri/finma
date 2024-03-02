@@ -182,7 +182,7 @@ class DaySummaryActivity : AppCompatActivity() {
         val xAxis = chartCombined.xAxis
         xAxis.position = XAxis.XAxisPosition.BOTTOM
         xAxis.axisMinimum = 0.5f
-        xAxis.axisMaximum = listExpenses.size + 0.5f
+        xAxis.axisMaximum = Math.max(listExpenses.size,28) + 0.5f
         xAxis.typeface =ResourcesCompat.getFont(this,R.font.monteser_bold)
         xAxis.axisLineColor = getColor(R.color.black)
         xAxis.setDrawGridLines(false)

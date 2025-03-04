@@ -318,5 +318,26 @@ class HomeActivity : AppCompatActivity() {
         tvMinBalance.setText("$averageBalance")
 
         tvSummaryMonth.setText(sdfMonth.format(summaryDate.time))
+
+        //for day summary balance
+        val dayMaxCount = summaryDate.getActualMaximum(Calendar.DAY_OF_MONTH)
+
+        val summaryList = db.getExpenseMonthDayGrouped(DateUtils.monthStartTime(summaryDate.time),DateUtils.monthEndTime(summaryDate.time))
+        val summaryModel = db.getMonthAmountDaySummary(DateUtils.monthStartTime(summaryDate.time),DateUtils.monthEndTime(summaryDate.time))
+        val actualAmount = summaryModel.balance
+        val expenseTotal = summaryList.sumOf { it.amount?:0 }
+        val dayAmount = actualAmount/dayMaxCount
+
+        val dayValue = summaryDate.get(Calendar.DAY_OF_MONTH)
+        val currentBalance = dayAmount * dayValue
+
+        val difference = currentBalance - expenseTotal
+        if(difference>0) {
+            tvDaySummary.setTextColor(getColor(R.color.green))
+            tvDaySummary.text = "+"+difference.toString()
+        }else{
+            tvDaySummary.setTextColor(getColor(R.color.red))
+            tvDaySummary.text = difference.toString()
+        }
     }
 }

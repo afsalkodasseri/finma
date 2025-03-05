@@ -28,7 +28,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        Log.d("FCM", "New Token : $token")
+//        Log.d("FCM", "New Token : $token")
+        Log.i("FCM", "New Token : $token")
         application.getSharedPreferences("firebase", 0).edit().putString("fcm_token", token).apply()
     }
 

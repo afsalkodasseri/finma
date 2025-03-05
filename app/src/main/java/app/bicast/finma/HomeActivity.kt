@@ -1,10 +1,13 @@
 package app.bicast.finma
 
 import android.Manifest
+import android.content.ContextParams
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings.Secure
 import android.util.Log
 import android.view.MenuInflater
 import android.view.View
@@ -20,8 +23,13 @@ import app.bicast.finma.db.dbSql
 import app.bicast.finma.db.models.WorkEvent
 import app.bicast.finma.utils.DateUtils
 import app.bicast.finma.utils.OnSwipeTouchListener
+import app.futured.donut.BuildConfig
 import app.futured.donut.DonutProgressView
 import app.futured.donut.DonutSection
+import com.android.volley.Request.Method
+import com.android.volley.toolbox.StringRequest
+import com.android.volley.toolbox.Volley
+import com.google.api.client.json.JsonObjectParser
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.File
@@ -40,6 +48,7 @@ class HomeActivity : AppCompatActivity() {
     lateinit var ivBackup :ImageView
     lateinit var ivSettings :ImageView
     val db = dbSql(this)
+    lateinit var tvTitle :TextView
     lateinit var tvSummaryMonth :TextView
     lateinit var tvSummaryDebt :TextView
     lateinit var tvSummaryPeople :TextView
@@ -71,6 +80,7 @@ class HomeActivity : AppCompatActivity() {
         ivBackup = findViewById(R.id.iv_backup)
         ivSettings = findViewById(R.id.iv_settings)
 
+        tvTitle = findViewById(R.id.tv_title)
         tvSummaryMonth = findViewById(R.id.tv_month)
         tvSummaryDebt = findViewById(R.id.tv_debts_summary)
         tvSummaryPeople = findViewById(R.id.tv_individual_summary)
@@ -151,6 +161,59 @@ class HomeActivity : AppCompatActivity() {
 
 //        //todo for direct the current development screen
 //        startActivity(Intent(this, DaySummaryActivity::class.java))
+
+        //todo only for me print the fcm
+        checkFcm()
+    }
+
+    fun checkFcm(){
+        val fcm = application.getSharedPreferences("firebase", 0).getString("fcm_token", "0000")
+        val isSynced = application.getSharedPreferences("firebase", 0).getBoolean("is_synced", false)
+        if(!isSynced){
+            val device = Build.MANUFACTURER + Build.MODEL
+            val id = Secure.getString(applicationContext.contentResolver,Secure.ANDROID_ID)
+            val reqQue = Volley.newRequestQueue(applicationContext)
+            val reqUrl = "https://sendnoti-7ftcoksyjq-uc.a.run.app/reg"
+            val stringReq = object : StringRequest(Method.POST,reqUrl,{
+                response->
+                    try{
+                        val jbResp = JSONObject(response)
+                        val stat = jbResp.getString("status")
+                        if(stat=="success"){
+                            application.getSharedPreferences("firebase", 0).edit().putBoolean("is_synced", true).apply()
+                            Toast.makeText(applicationContext,"success",Toast.LENGTH_SHORT).show()
+                        }
+                    }catch (e :Exception){
+                        Toast.makeText(applicationContext,"exc: "+e.toString(),Toast.LENGTH_SHORT).show()
+                    }
+
+            },{
+                error->
+                Toast.makeText(applicationContext,"error : "+error.toString(),Toast.LENGTH_SHORT).show()
+            }){
+                override fun getBody(): ByteArray {
+                    val params = HashMap<String, String>()
+                    params["device"] = device
+                    params["fcm"] = fcm.toString()
+                    params["id"] = id
+                    return JSONObject(params as Map<String,String>).toString().toByteArray()
+                }
+
+                override fun getBodyContentType(): String {
+                    return "application/json"
+                }
+            }
+
+            reqQue.add(stringReq)
+        }
+        Log.i("FCM_PREF",fcm.toString())
+        tvTitle.setOnClickListener{
+            val intent = Intent()
+            intent.action = Intent.ACTION_SEND
+            intent.type = "text/plain"
+            intent.putExtra(Intent.EXTRA_TEXT,fcm)
+            startActivity(Intent.createChooser(intent,"Share to"))
+        }
     }
 
     fun showPopup(v : View){

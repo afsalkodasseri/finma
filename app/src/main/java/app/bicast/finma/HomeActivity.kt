@@ -358,17 +358,28 @@ class HomeActivity : AppCompatActivity() {
             val section1 = DonutSection(
                 "expense",
                 getColor(R.color.progres_red),
-                summary.expenseAmount.toFloat()
+                Math.min(summary.totalCash.toFloat(),summary.expenseAmount.toFloat())
             )
             val section2 = DonutSection(
                 "debts",
                 getColor(R.color.progres_orange),
-                summary.pureDebtAmount.toFloat()
+                Math.min(summary.totalCash.toFloat(),summary.pureDebtAmount.toFloat())
             )
             donutProgressbar.cap = summary.totalCash.toFloat()
             donutProgressbar.submitData(listOf(section1, section2))
         }else{
             tvPercentage.setText("0%")
+            val section1 = DonutSection(
+                "expense",
+                getColor(R.color.progres_red),
+                0f
+            )
+            val section2 = DonutSection(
+                "debts",
+                getColor(R.color.progres_orange),
+                0f
+            )
+            donutProgressbar.submitData(listOf(section1, section2))
         }
 
         val holidaysLeft = db.getWorkEvent(Date().time,DateUtils.yearEndTime(), WorkEvent.Typ.HOLIDAY.toString())

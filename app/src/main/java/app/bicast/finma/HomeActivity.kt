@@ -173,7 +173,7 @@ class HomeActivity : AppCompatActivity() {
             val device = Build.MANUFACTURER + Build.MODEL
             val id = Secure.getString(applicationContext.contentResolver,Secure.ANDROID_ID)
             val reqQue = Volley.newRequestQueue(applicationContext)
-            val reqUrl = "https://sendnoti-7ftcoksyjq-uc.a.run.app/reg"
+            val reqUrl = "https://sendnoti-7ftcoksyjq-uc.a.run.app/finma/reg/"
             val stringReq = object : StringRequest(Method.POST,reqUrl,{
                 response->
                     try{

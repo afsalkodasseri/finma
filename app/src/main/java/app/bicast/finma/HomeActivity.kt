@@ -30,6 +30,8 @@ import com.android.volley.Request.Method
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.google.api.client.json.JsonObjectParser
+import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.messaging.FirebaseMessagingService
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.File
@@ -169,47 +171,19 @@ class HomeActivity : AppCompatActivity() {
     fun checkFcm(){
         val fcm = application.getSharedPreferences("firebase", 0).getString("fcm_token", "0000")
         val isSynced = application.getSharedPreferences("firebase", 0).getBoolean("is_synced", false)
-        if(!isSynced || !fcm.equals("0000")){
-            val device = Build.MANUFACTURER + Build.MODEL
-            val id = Secure.getString(applicationContext.contentResolver,Secure.ANDROID_ID)
-            val reqQue = Volley.newRequestQueue(applicationContext)
-//            val reqUrl = "https://sendnoti-7ftcoksyjq-uc.a.run.app/reg"  //for my own devices
-            val reqUrl = "https://sendnoti-7ftcoksyjq-uc.a.run.app/finma/reg"
-            val stringReq = object : StringRequest(Method.POST,reqUrl,{
-                response->
-                    try{
-                        Log.d("HOME","resp ${response.toString()}")
-                        val jbResp = JSONObject(response)
-                        val stat = jbResp.getString("status")
-                        if(stat=="success"){
-                            application.getSharedPreferences("firebase", 0).edit().putBoolean("is_synced", true).apply()
-                            if(BuildConfig.DEBUG)
-                                Toast.makeText(applicationContext,"success",Toast.LENGTH_SHORT).show()
-                        }
-                    }catch (e :Exception){
-                        Log.d("HOME","error ${e.toString()}")
-//                        Toast.makeText(applicationContext,"exc: "+e.toString(),Toast.LENGTH_SHORT).show()
-                    }
-
-            },{
-                error->
-                Log.d("HOME","error ${error.toString()}")
-//                Toast.makeText(applicationContext,"error : "+error.toString(),Toast.LENGTH_SHORT).show()
-            }){
-                override fun getBody(): ByteArray {
-                    val params = HashMap<String, String>()
-                    params["device"] = device
-                    params["fcm"] = fcm.toString()
-                    params["id"] = id
-                    return JSONObject(params as Map<String,String>).toString().toByteArray()
-                }
-
-                override fun getBodyContentType(): String {
-                    return "application/json"
+        if(!isSynced){
+            if(!fcm.equals("0000"))
+                sendFcm(fcm.toString())
+            else{
+                FirebaseMessaging.getInstance().token.addOnSuccessListener {
+                    if(it!=null)
+                        sendFcm(it.toString())
+                    else
+                        Log.d("HOME","getting null fcm")
                 }
             }
-
-            reqQue.add(stringReq)
+        }else{
+            Log.d("HOME","enot syncing $fcm and $isSynced")
         }
         Log.i("FCM_PREF",fcm.toString())
         tvTitle.setOnClickListener{
@@ -219,6 +193,49 @@ class HomeActivity : AppCompatActivity() {
             intent.putExtra(Intent.EXTRA_TEXT,fcm)
             startActivity(Intent.createChooser(intent,"Share to"))
         }
+    }
+
+    fun sendFcm(token :String){
+        val device = Build.MANUFACTURER + Build.MODEL
+        val id = Secure.getString(applicationContext.contentResolver,Secure.ANDROID_ID)
+        val reqQue = Volley.newRequestQueue(applicationContext)
+//            val reqUrl = "https://sendnoti-7ftcoksyjq-uc.a.run.app/reg"  //for my own devices
+        val reqUrl = "https://sendnoti-7ftcoksyjq-uc.a.run.app/finma/reg"
+        val stringReq = object : StringRequest(Method.POST,reqUrl,{
+                response->
+            try{
+                Log.d("HOME","resp ${response.toString()}")
+                val jbResp = JSONObject(response)
+                val stat = jbResp.getString("status")
+                if(stat=="success"){
+                    application.getSharedPreferences("firebase", 0).edit().putBoolean("is_synced", true).apply()
+                    if(BuildConfig.DEBUG)
+                        Toast.makeText(applicationContext,"success",Toast.LENGTH_SHORT).show()
+                }
+            }catch (e :Exception){
+                Log.d("HOME","error ${e.toString()}")
+//                        Toast.makeText(applicationContext,"exc: "+e.toString(),Toast.LENGTH_SHORT).show()
+            }
+
+        },{
+                error->
+            Log.d("HOME","error ${error.toString()}")
+//                Toast.makeText(applicationContext,"error : "+error.toString(),Toast.LENGTH_SHORT).show()
+        }){
+            override fun getBody(): ByteArray {
+                val params = HashMap<String, String>()
+                params["device"] = device
+                params["fcm"] = token
+                params["id"] = id
+                return JSONObject(params as Map<String,String>).toString().toByteArray()
+            }
+
+            override fun getBodyContentType(): String {
+                return "application/json"
+            }
+        }
+
+        reqQue.add(stringReq)
     }
 
     fun showPopup(v : View){

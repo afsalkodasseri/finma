@@ -11,6 +11,7 @@
         android:layout_height="wrap_content"
         app:cardCornerRadius="15dp"
         app:cardElevation="3dp"
+        app:cardBackgroundColor="@color/white"
         android:layout_marginHorizontal="5dp"
         android:layout_marginTop="5dp"
         android:layout_marginBottom="5dp">

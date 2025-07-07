@@ -187,11 +187,9 @@ class HomeActivity : AppCompatActivity() {
         }
         Log.i("FCM_PREF",fcm.toString())
         tvTitle.setOnClickListener{
-            val intent = Intent()
-            intent.action = Intent.ACTION_SEND
-            intent.type = "text/plain"
-            intent.putExtra(Intent.EXTRA_TEXT,fcm)
-            startActivity(Intent.createChooser(intent,"Share to"))
+            if(BuildConfig.DEBUG && fcm!=null){
+                sendFcmOwn(fcm)
+            }
         }
     }
 
@@ -201,6 +199,48 @@ class HomeActivity : AppCompatActivity() {
         val reqQue = Volley.newRequestQueue(applicationContext)
 //            val reqUrl = "https://sendnoti-7ftcoksyjq-uc.a.run.app/reg"  //for my own devices
         val reqUrl = "https://sendnoti-7ftcoksyjq-uc.a.run.app/finma/reg"
+        val stringReq = object : StringRequest(Method.POST,reqUrl,{
+                response->
+            try{
+                Log.d("HOME","resp ${response.toString()}")
+                val jbResp = JSONObject(response)
+                val stat = jbResp.getString("status")
+                if(stat=="success"){
+                    application.getSharedPreferences("firebase", 0).edit().putBoolean("is_synced", true).apply()
+                    if(BuildConfig.DEBUG)
+                        Toast.makeText(applicationContext,"success",Toast.LENGTH_SHORT).show()
+                }
+            }catch (e :Exception){
+                Log.d("HOME","error ${e.toString()}")
+//                        Toast.makeText(applicationContext,"exc: "+e.toString(),Toast.LENGTH_SHORT).show()
+            }
+
+        },{
+                error->
+            Log.d("HOME","error ${error.toString()}")
+//                Toast.makeText(applicationContext,"error : "+error.toString(),Toast.LENGTH_SHORT).show()
+        }){
+            override fun getBody(): ByteArray {
+                val params = HashMap<String, String>()
+                params["device"] = device
+                params["fcm"] = token
+                params["id"] = id
+                return JSONObject(params as Map<String,String>).toString().toByteArray()
+            }
+
+            override fun getBodyContentType(): String {
+                return "application/json"
+            }
+        }
+
+        reqQue.add(stringReq)
+    }
+
+    fun sendFcmOwn(token :String){
+        val device = Build.MANUFACTURER + Build.MODEL
+        val id = Secure.getString(applicationContext.contentResolver,Secure.ANDROID_ID)
+        val reqQue = Volley.newRequestQueue(applicationContext)
+            val reqUrl = "https://sendnoti-7ftcoksyjq-uc.a.run.app/reg"  //for my own devices
         val stringReq = object : StringRequest(Method.POST,reqUrl,{
                 response->
             try{

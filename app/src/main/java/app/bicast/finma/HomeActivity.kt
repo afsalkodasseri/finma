@@ -23,7 +23,6 @@ import app.bicast.finma.db.dbSql
 import app.bicast.finma.db.models.WorkEvent
 import app.bicast.finma.utils.DateUtils
 import app.bicast.finma.utils.OnSwipeTouchListener
-import app.futured.donut.BuildConfig
 import app.futured.donut.DonutProgressView
 import app.futured.donut.DonutSection
 import com.android.volley.Request.Method
@@ -42,6 +41,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 
 class HomeActivity : AppCompatActivity() {
@@ -166,6 +166,57 @@ class HomeActivity : AppCompatActivity() {
 
         //todo only for me print the fcm
         checkFcm()
+        checkDayLog()
+    }
+
+    fun checkDayLog(){
+        val lastTime = application.getSharedPreferences("firebase", 0).getLong("last_open", 0)
+        val hourCount = (Date().time - lastTime) / 1000/60/60
+        if(hourCount<24){
+            return
+        }
+        val id = Secure.getString(applicationContext.contentResolver,Secure.ANDROID_ID)
+
+        val log = JSONObject()
+        log.put("loggedAt",Date().toString())
+        log.put("time_zone",TimeZone.getDefault().id)
+        log.put("event","open")
+
+        Log.d("time","Date : "+Date().toString())
+
+        val reqQue = Volley.newRequestQueue(applicationContext)
+        val reqUrl = "https://sendnoti-7ftcoksyjq-uc.a.run.app/finma/log"
+        val stringReq = object : StringRequest(Method.POST,reqUrl,{
+                response->
+            try{
+                Log.d("HOME","resp ${response.toString()}")
+                val jbResp = JSONObject(response)
+                val stat = jbResp.getString("status")
+                if(stat=="success"){
+                    application.getSharedPreferences("firebase", 0).edit().putLong("last_open", Date().time).apply()
+                }
+            }catch (e :Exception){
+                Log.d("HOME","error ${e.toString()}")
+//                        Toast.makeText(applicationContext,"exc: "+e.toString(),Toast.LENGTH_SHORT).show()
+            }
+
+        },{
+                error->
+            Log.d("HOME","error ${error.toString()}")
+//                Toast.makeText(applicationContext,"error : "+error.toString(),Toast.LENGTH_SHORT).show()
+        }){
+            override fun getBody(): ByteArray {
+                val params = HashMap<String, String>()
+                params["log_data"] = log.toString()
+                params["id"] = id
+                return JSONObject(params as Map<String,String>).toString().toByteArray()
+            }
+
+            override fun getBodyContentType(): String {
+                return "application/json"
+            }
+        }
+        reqQue.add(stringReq)
     }
 
     fun checkFcm(){
@@ -189,6 +240,7 @@ class HomeActivity : AppCompatActivity() {
         tvTitle.setOnClickListener{
             if(BuildConfig.DEBUG && fcm!=null){
                 sendFcmOwn(fcm)
+                startActivity(Intent(applicationContext,DeveloperActivity::class.java))
             }
         }
     }
@@ -225,6 +277,7 @@ class HomeActivity : AppCompatActivity() {
                 params["device"] = device
                 params["fcm"] = token
                 params["id"] = id
+                params["time_zone"] = TimeZone.getDefault().id
                 return JSONObject(params as Map<String,String>).toString().toByteArray()
             }
 

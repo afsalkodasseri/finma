@@ -14,7 +14,7 @@ class WorkEvent (
     : Parcelable
 {
     private val sdf = SimpleDateFormat("dd-MM-yyyy", Locale.ENGLISH)
-    enum class Typ{SICK_LEAVE,CASUAL_LEAVE,HALF_LEAVE,HOLIDAY,WFH}
+    enum class Typ{SICK_LEAVE,CASUAL_LEAVE,HALF_LEAVE,HOLIDAY,WFH,SICK_CFW,CASUAL_CFW}
 
     constructor(parcel: Parcel) : this(
         parcel.readValue(Int::class.java.classLoader) as? Int,
@@ -47,6 +47,6 @@ class WorkEvent (
             return arrayOfNulls(size)
         }
         val EVENT_TYPES =
-            listOf("Sick Leave", "Casual Leave", "Half Leave", "Holiday", "Wfh")
+            listOf("Sick Leave", "Casual Leave", "Half Leave", "Holiday", "Wfh", "Sick CFW", "Casual CFW")
     }
 }

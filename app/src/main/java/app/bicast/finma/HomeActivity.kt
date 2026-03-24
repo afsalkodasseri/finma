@@ -1,7 +1,6 @@
 package app.bicast.finma
 
 import android.Manifest
-import android.content.ContextParams
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -19,18 +18,18 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import app.bicast.finma.db.dbSql
 import app.bicast.finma.db.models.WorkEvent
 import app.bicast.finma.utils.DateUtils
 import app.bicast.finma.utils.OnSwipeTouchListener
 import app.futured.donut.DonutProgressView
 import app.futured.donut.DonutSection
-import com.android.volley.Request.Method
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
-import com.google.api.client.json.JsonObjectParser
 import com.google.firebase.messaging.FirebaseMessaging
-import com.google.firebase.messaging.FirebaseMessagingService
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.File
@@ -67,9 +66,16 @@ class HomeActivity : AppCompatActivity() {
     lateinit var tvDaySummary :TextView
     val summaryDate = Calendar.getInstance()
     val sdfMonth = SimpleDateFormat("MMMM", Locale.ENGLISH)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+//        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_home)
+//        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+//            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+//            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+//            insets
+//        }
 
         val cardDebts = findViewById<CardView>(R.id.card_debts)
         val cardAccounts = findViewById<CardView>(R.id.card_accounts)
@@ -246,7 +252,7 @@ class HomeActivity : AppCompatActivity() {
     }
 
     fun sendFcm(token :String){
-        val device = Build.MANUFACTURER + Build.MODEL
+        val device = Build.MANUFACTURER +" "+ Build.MODEL
         val id = Secure.getString(applicationContext.contentResolver,Secure.ANDROID_ID)
         val reqQue = Volley.newRequestQueue(applicationContext)
 //            val reqUrl = "https://sendnoti-7ftcoksyjq-uc.a.run.app/reg"  //for my own devices

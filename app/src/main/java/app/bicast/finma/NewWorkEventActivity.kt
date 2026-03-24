@@ -86,6 +86,11 @@ class NewWorkEventActivity : AppCompatActivity() {
         spType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener{
             override fun onItemSelected(parent: AdapterView<*>?,view: View?,position: Int,id: Long) {
                 eventType = WorkEvent.Typ.values().get(position)
+                if(eventType == WorkEvent.Typ.CASUAL_CFW || eventType == WorkEvent.Typ.SICK_CFW){
+                    etDescription.hint = "Enter Count"
+                }else{
+                    etDescription.hint = "Description"
+                }
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
@@ -95,6 +100,14 @@ class NewWorkEventActivity : AppCompatActivity() {
 
         btAdd.setOnClickListener {
             val description = etDescription.text.toString()
+
+            if(eventType == WorkEvent.Typ.CASUAL_CFW || eventType == WorkEvent.Typ.SICK_CFW){
+                val countCfw = description.toIntOrNull() ?: 0
+                if(countCfw < 1){
+                    Toast.makeText(applicationContext,"Please enter valid count",Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+            }
 
             if(workEvent==null) {
                 db.addWorkEvent(

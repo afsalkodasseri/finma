@@ -3,6 +3,7 @@ package app.bicast.finma
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.text.Html
 import android.util.Log
 import android.view.View
 import android.widget.ImageView
@@ -85,18 +86,28 @@ class WorkHomeActivity : AppCompatActivity() {
     fun refreshSummary(){
         val tempCal = Calendar.getInstance()
         val monthCount = tempCal.get(Calendar.MONTH) + 1
-        val totalCasual = monthCount
-        val totalSick = monthCount
+        var totalCasual = monthCount
+        var totalSick = monthCount
         val sickTook = db.getWorkEvent(DateUtils.yearStartTime(),DateUtils.yearEndTime(),WorkEvent.Typ.SICK_LEAVE.toString())
+        val sickCfwBalance = db.getWorkEvent(DateUtils.yearStartTime(),DateUtils.yearEndTime(),WorkEvent.Typ.SICK_CFW.toString())
         val casualTook = db.getWorkEvent(DateUtils.yearStartTime(),DateUtils.yearEndTime(),WorkEvent.Typ.CASUAL_LEAVE.toString())
+        val casualCfwBalance = db.getWorkEvent(DateUtils.yearStartTime(),DateUtils.yearEndTime(),WorkEvent.Typ.CASUAL_CFW.toString())
         val holidays = db.getWorkEvent(DateUtils.yearStartTime(),DateUtils.yearEndTime(),WorkEvent.Typ.HOLIDAY.toString())
         val holidaysLeft = db.getWorkEvent(Date().time,DateUtils.yearEndTime(),WorkEvent.Typ.HOLIDAY.toString())
         val wfhs = db.getWorkEvent(DateUtils.yearStartTime(),DateUtils.yearEndTime(),WorkEvent.Typ.WFH.toString())
 
+        val totalCasualCfw = casualCfwBalance.sumOf { it.description.toInt() }
+        val totalSickCfw = sickCfwBalance.sumOf { it.description.toInt() }
+        totalSick = totalSick + totalSickCfw
+        totalCasual = totalCasual + totalCasualCfw
+
         tvSickLeave.setText(sickTook.size.toString())
-        tvSickLeaveTotal.setText("out of "+totalSick.toString())
+//        tvSickLeaveTotal.setText("out of "+totalSick.toString()+(if (totalSickCfw>0) " (${totalSickCfw})" else ""))
         tvCasualLeave.setText(casualTook.size.toString())
-        tvCasualLeaveTotal.setText("out of "+totalCasual.toString())
+        val textSick = "out of "+totalSick.toString()+(if (totalSickCfw>0) " <small><font color='#16b518'>+${totalSickCfw}</font></small>" else "")
+        tvSickLeaveTotal.text = Html.fromHtml(textSick, Html.FROM_HTML_MODE_LEGACY)
+        val textCasual = "out of "+totalCasual.toString()+(if (totalCasualCfw>0) " <small><font color='#16b518'>+${totalCasualCfw}</font></small>" else "")
+        tvCasualLeaveTotal.text = Html.fromHtml(textCasual, Html.FROM_HTML_MODE_LEGACY)
         tvHoliday.setText(holidaysLeft.size.toString())
         tvHolidayTotal.setText("out of "+holidays.size.toString())
         tvWfh.setText(wfhs.size.toString())

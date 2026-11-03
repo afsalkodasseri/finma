@@ -24,6 +24,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         val requested = message.notification?.channelId ?: message.data["channel_id"]
         val channelId = when (requested) {
             NotificationChannels.UPDATES_ID -> NotificationChannels.UPDATES_ID
+            NotificationChannels.MISC_ID -> NotificationChannels.MISC_ID
             else -> NotificationChannels.MAIN_ID
         }
 
